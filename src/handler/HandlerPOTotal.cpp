@@ -21,73 +21,63 @@ void HandlerPOTotal::WriteMatricesToFile(std::string &destName, double nrg)
     }
 
     outFile << std::setprecision(10);
-    outFile << "Theta 2pi*dcos M11 M12 M13 M14 "\
-        "M21/ M22 M23 M24 "\
-        "M31/ M32 M33 M34 "\
-        "M41/ M42 M43 M44";
-    matrix sum(4, 4);
+    outFile << "ScAngle 2pi*dcos "\
+            "M11 M12 M13 M14 "\
+            "M21 M22 M23 M24 "\
+            "M31 M32 M33 M34 "\
+            "M41 M42 M43 M44";
+    matrix Msum(4, 4);
 
     auto &Lp = *m_Lp;
     auto &Ln = *m_Ln;
 
-    int &nT = m_sphere.nZenith;
-    double &dT = m_sphere.zenithStep;
+    int &nZen = m_sphere.nZenith;
+    double &dZen = m_sphere.zenithStep;
+    int &nAz = m_sphere.nAzimuth;
 
-    int &nP = m_sphere.nAzimuth;
-
-    for (int t = 0; t <= nT; ++t)
-//    for (int t = nT; t >= 0; --t)
+    for (int iZen = 0; iZen <= nZen; ++iZen)
+//    for (int iZen = nZen; iZen >= 0; --iZen)
     {
-        sum.Fill(0.0);
-//        double tt = RadToDeg((m_sphere.zenithEnd - m_sphere.zenithStart) - t*dT);
-        double tt = RadToDeg(m_sphere.zenithStart + (t*dT));
+        Msum.Fill(0.0);
+        double radZen = m_sphere.zenithStart + iZen*dZen;
+//        double tt = RadToDeg(m_sphere.zenithEnd) - RadToDeg((t*dT));
 
-        for (int p = 0; p <= nP; ++p)
+        for (int iAz = 0; iAz <= nAz; ++iAz)
         {
-            double radPhi = -p*m_sphere.azinuthStep;
-            matrix m = M(p, t);
-//#ifdef _DEBUG // DEB
-//            if (t == nT && p == nP)
-//                int fffff = 0;
-//            double fff[4];
-//            fff[0] = m[0][0];
-//            fff[1] = m[0][1];
-//            fff[2] = m[1][0];
-//            fff[3] = m[1][1];
-//#endif
-            Lp[1][1] = cos(2*radPhi);
-            Lp[1][2] = sin(2*radPhi);
+            double radAz = -iAz*m_sphere.azinuthStep;
+            matrix m = M(iAz, iZen);
+
+            Lp[1][1] = cos(2*radAz);
+            Lp[1][2] = sin(2*radAz);
             Lp[2][1] = -Lp[1][2];
             Lp[2][2] = Lp[1][1];
 
-            Ln[1][2] = -Lp[1][2];
-            Ln[2][1] = -Lp[2][1];
+            Ln = Lp;
+            Ln[1][2] *= -1;
+            Ln[2][1] *= -1;
 
-            if (t == 0)
+            if (radZen > M_PI-__FLT_EPSILON__)
             {
-                sum += Lp*m*Lp;
+                Msum += Lp*m*Lp;
             }
-            else if (t == nT)
+            else if (radZen < __FLT_EPSILON__)
             {
-                sum += Ln*m*Lp; // OPT: вынести Ln в отдельный случай
+                Msum += Ln*m*Lp;
             }
             else
             {
-                sum += m*Lp;
+                Msum += m*Lp;
             }
         }
 
-        double dS2 = (t == 0 || t == (nT)) ? 1.0-cos(0.5*dT)
-                                           : (cos((t-0.5)*dT)-cos((t+0.5)*dT));
+        double _2Pi_dcos = (radZen > M_PI-__FLT_EPSILON__ || radZen < __FLT_EPSILON__) ?
+                    1.0-cos(0.5*dZen) :
+                    cos((iZen-0.5)*dZen)-cos((iZen+0.5)*dZen);
 
-        sum /= m_sphere.nAzimuth;
-#ifdef _DEBUG
-        double dde = sum[0][0];
-        std::cout << "@@@@@@@@@@@ " << dde << std::endl;
-#endif
-        dS2 *= M_2PI;
-        outFile << std::endl << tt << ' ' << dS2 << ' ' /*<< nrg << ' '*/;
-        outFile << sum;
+        Msum /= m_sphere.nAzimuth;
+        _2Pi_dcos *= M_2PI;
+        outFile << std::endl << RadToDeg(radZen) << ' ' << _2Pi_dcos << ' ' /*<< nrg << ' '*/;
+        outFile << Msum;
     }
 
     outFile.close();

@@ -399,5 +399,13 @@ void CertainAggregate::GetParticalFacetIdRangeByFacetId(int id, int &begin, int 
 	{
 		begin = 56;
 		end = 64;
-	}
+    }
+}
+
+void CertainAggregate::Resize(double size)
+{
+    double ratio = size/MaximalDimention();
+    Scale(ratio);
+    Reset();
+
 }

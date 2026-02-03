@@ -51,11 +51,12 @@ void SetArgRules(ArgPP &parser)
     parser.AddRule("rs", 1, true, "pf"); // resize particle (new size)
     parser.AddRule("fixed", 2, true); // fixed orientarion (beta, gamma)
     parser.AddRule("random", 2, true); // random orientarion (beta number, gamma number)
+    parser.AddRule("montecarlo", 1, true); // random orientarion (beta number, gamma number)
     parser.AddRule("go", 0, true); // geometrical optics method
     parser.AddRule("po", 0, true); // phisical optics method
     parser.AddRule("w", 1, true); // wavelength
-    parser.AddRule("b", 2, true, "po"); // beta range (begin, end)
-    parser.AddRule("g", 2, true, "po"); // gamma range (begin, end)
+    parser.AddRule("b", 2, true); // beta range (begin, end)
+    parser.AddRule("g", 2, true); // gamma range (begin, end)
     parser.AddRule("grid", '+', true); /* backscattering grid:
  (radius, Nphi, Ntheta) when 3 parameters
  (theta1, theta2, Nphi, Ntheta) when 4 parameters*/
@@ -151,7 +152,7 @@ AngleRange GetRange(const ArgPP &parser, const std::string &key,
         throw std::exception();
     }
 
-    return AngleRange(min, max, number);
+    return AngleRange(min, max, number + 1);
 }
 
 int main(int argc, const char* argv[])
@@ -194,7 +195,7 @@ int main(int argc, const char* argv[])
         std::string filename = args.GetStringValue("p");
         particle = new Particle();
         particle->SetFromFile(filename);
-        particle->SetRefractiveIndex(complex(refrIndex));
+        particle->SetRefractiveIndex(refrIndex);
 
         double origDMax = particle->MaximalDimention();
         additionalSummary += "from file: " + filename + "\n";
@@ -314,7 +315,17 @@ int main(int argc, const char* argv[])
 
         if (key.size())
         {
-            string val = args.GetStringValue(key);
+            string val;
+            int i = 0;
+
+            if (isdigit(key[0]))
+            {
+                i = (int)key[0]-48;
+                key = key.substr(1);
+            }
+
+            val += args.GetStringValue(key, i);
+
             dirName.replace(start, pos-start, val);
             pos = start + val.size();
         }
@@ -372,6 +383,7 @@ int main(int argc, const char* argv[])
             {
                 tracer.m_scattering->restriction = args.GetDoubleValue("r", 0);
             }
+
             handler->isCoh = !args.IsCatched("incoh");
             handler->SetScatteringSphere(bsCone);
             handler->SetTracks(&trackGroups);
@@ -490,6 +502,41 @@ int main(int argc, const char* argv[])
 
             delete handler;
         }
+        else if (args.IsCatched("montecarlo"))
+        {
+            additionalSummary += ", Monte Carlo method\n\n";
+            AngleRange beta = GetRange(args, "b", particle);
+            AngleRange gamma = GetRange(args, "g", particle);
+
+            HandlerPO *handler;
+
+            TracerPOTotal *tracer;
+            ScatteringRange conus = SetConus(args);
+
+            tracer = new TracerPOTotal(particle, reflNum, dirName);
+            trackGroups.push_back(TrackGroup());
+            handler = new HandlerPOTotal(particle, &tracer->m_incidentLight,
+                                         nTheta, wave);
+
+            cout << additionalSummary;
+            tracer->m_summary = additionalSummary;
+
+            handler->SetScatteringSphere(conus);
+            handler->SetTracks(&trackGroups);
+            handler->SetAbsorptionAccounting(isAbs);
+
+            if (args.GetArgNumber("n") == 3 &&
+                args.GetStringValue("n", 2) == "fixed")
+            {
+                handler->m_fixedItr = reflNum;
+            }
+
+            tracer->SetIsOutputGroups(isOutputGroups);
+            tracer->SetHandler(handler);
+
+            int nOr = args.GetIntValue("montecarlo", 0);
+            tracer->TraceMonteCarlo(beta, gamma, nOr);
+        }
         else
         {
             cout << endl << "error";
@@ -507,6 +554,11 @@ int main(int argc, const char* argv[])
         }
         tracer.m_summary = additionalSummary;
         tracer.SetIsOutputGroups(isOutputGroups);
+
+        if (args.IsCatched("log"))
+        {
+            tracer.m_logTime = args.GetIntValue("log");
+        }
 
         HandlerGO *handler;
 
@@ -546,6 +598,16 @@ int main(int argc, const char* argv[])
             cout << additionalSummary;
             tracer.m_summary = additionalSummary;
             tracer.TraceRandom(beta, gamma);
+        }
+        else if (args.IsCatched("montecarlo"))
+        {
+            additionalSummary += ", Monte Carlo method, ";
+            AngleRange beta = GetRange(args, "b", particle);
+            AngleRange gamma = GetRange(args, "g", particle);
+            cout << additionalSummary;
+            tracer.m_summary = additionalSummary;
+            int nOr = args.GetIntValue("montecarlo", 0);
+            tracer.TraceMonteCarlo(beta, gamma, nOr);
         }
 
         delete handler;

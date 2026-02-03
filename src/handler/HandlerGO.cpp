@@ -157,13 +157,13 @@ void HandlerGO::RotateMuller(const Point3f &dir, matrix &bf)
 void HandlerGO::WriteToFile(ContributionGO &contrib, double norm,
                             const std::string &filename)
 {
-    std::string name = CreateUniqueFileName(filename);
+    std::string name = CreateUniqueFileName(filename, ".dat");
     std::ofstream allFile(name, std::ios::out);
 
-    allFile << "tetta 2pi*dcos M11 M12/M11 M13/M11 M14/M11 "\
-                "M21/M11 M22/M11 M23/M11 M24/M11 "\
-                "M31/M11 M32/M11 M33/M11 M34/M11 "\
-                "M41/M11 M42/M11 M43/M11 M44/M11";
+    allFile << "ScAngle 2pi*dcos M11 M12 M13 M14 "\
+                "M21 M22 M23 M24 "\
+                "M31 M32 M33 M34 "\
+                "M41 M42 M43 M44";
 
     double radius = m_sphere.zenithEnd - m_sphere.zenithStart;
     float thetaStepDeg = contrib.thetaStep;
@@ -171,9 +171,9 @@ void HandlerGO::WriteToFile(ContributionGO &contrib, double norm,
 
     for (int j = contrib.nTheta; j >= 0; j--)
     {
-        double tmp0 = 180.0/contrib.nTheta*(contrib.nTheta-j);
-        double tmp1 = (j == 0) ? -(0.25*180.0)/contrib.nTheta : 0;
-        double tmp2 = (j == (int)contrib.nTheta) ? (0.25*180.0)/contrib.nTheta : 0;
+//        double tmp0 = 180.0/contrib.nTheta*(contrib.nTheta-j);
+//        double tmp1 = (j == 0) ? -(0.25*180.0)/contrib.nTheta : 0;
+//        double tmp2 = (j == (int)contrib.nTheta) ? (0.25*180.0)/contrib.nTheta : 0;
 
         double sn = (j == 0 || j == contrib.nTheta)
                 ? 1-cos(thetaStepRad/2.0)
@@ -191,28 +191,28 @@ void HandlerGO::WriteToFile(ContributionGO &contrib, double norm,
 //        std::cout << sn;
 //#endif
 
-        if (bf[0][0] <= DBL_EPSILON)
+        if (bf[0][0] < DBL_EPSILON)
         {
-            allFile << " 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0";
+            allFile << " 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0";
         }
         else
         {
             allFile << ' ' << bf[0][0]*norm/(M_2PI*sn)
-                    << ' ' << bf[0][1]/bf[0][0]
-                    << ' ' << bf[0][2]/bf[0][0] // usually = 0
-                    << ' ' << bf[0][3]/bf[0][0] // usually = 0
-                    << ' ' << bf[1][0]/bf[0][0]
-                    << ' ' << bf[1][1]/bf[0][0]
-                    << ' ' << bf[1][2]/bf[0][0] // usually = 0
-                    << ' ' << bf[1][3]/bf[0][0] // usually = 0
-                    << ' ' << bf[2][0]/bf[0][0] // usually = 0
-                    << ' ' << bf[2][1]/bf[0][0] // usually = 0
-                    << ' ' << bf[2][2]/bf[0][0]
-                    << ' ' << bf[2][3]/bf[0][0]
-                    << ' ' << bf[3][0]/bf[0][0] // usually = 0
-                    << ' ' << bf[3][1]/bf[0][0] // usually = 0
-                    << ' ' << bf[3][2]/bf[0][0]
-                    << ' ' << bf[3][3]/bf[0][0];
+                    << ' ' << bf[0][1]
+                    << ' ' << bf[0][2]
+                    << ' ' << bf[0][3]
+                    << ' ' << bf[1][0]
+                    << ' ' << bf[1][1]
+                    << ' ' << bf[1][2]
+                    << ' ' << bf[1][3]
+                    << ' ' << bf[2][0]
+                    << ' ' << bf[2][1]
+                    << ' ' << bf[2][2]
+                    << ' ' << bf[2][3]
+                    << ' ' << bf[3][0]
+                    << ' ' << bf[3][1]
+                    << ' ' << bf[3][2]
+                    << ' ' << bf[3][3];
         }
     }
 

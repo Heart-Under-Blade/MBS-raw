@@ -404,6 +404,8 @@ void HandlerPO::HandleBeams(std::vector<Beam> &beams, double sinZenith)
         {
             for (int j = 0; j <= m_sphere.nZenith; ++j)
             {
+                if (/*i == m_sphere.nAzimuth &&*/ j == m_sphere.nZenith)
+                    int ddd = 0;
 #else
 
         for (int i = 0; i <= m_sphere.nAzimuth; ++i)
@@ -412,7 +414,7 @@ void HandlerPO::HandleBeams(std::vector<Beam> &beams, double sinZenith)
             {
 #endif
                 Point3d &dir = m_sphere.directions[i][j];
-                Point3d &vf = (j == 0) ? m_sphere.vf.back() : m_sphere.vf[i];
+                Point3d &vf = /*(j == 0) ? m_sphere.vf.back() :*/ m_sphere.vf[i][j];
                 matrixC diffractedMatrix = ApplyDiffraction(beam, info, dir, vf);
 
 //                if (groupId < 0)

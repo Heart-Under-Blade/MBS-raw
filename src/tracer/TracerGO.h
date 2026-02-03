@@ -9,6 +9,8 @@ public:
 
 	void TraceRandom(const AngleRange &betaRange, const AngleRange &gammaRange);
 	void TraceFixed(const double &beta, const double &gamma);
+    void TraceMonteCarlo(const AngleRange &betaRange, const AngleRange &gammaRange,
+                         int nOrientations);
 
 protected:
 	double CalcNorm(long long orNum);

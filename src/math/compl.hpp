@@ -33,13 +33,17 @@ public:
 	// members
 	complex&  operator=(const complex& b)
 		{ this->re = b.re; this->im = b.im; return *this; }
-	complex  operator+()         const { return *this; }
+//	complex  operator+()         const { return *this; }
 	complex  operator+(double x) const
 		{ return complex(this->re+x, this->im); }
 	complex  operator+(const complex& z) const
 		{ return complex(this->re+z.re, this->im+z.im); }
 	complex  operator+=(const complex& z)
-		{ return *this = complex(this->re+z.re, this->im+z.im); }
+        {
+        this->re+=z.re;
+        this->im+=z.im;
+        return *this;
+    }
 	complex  operator+=(double x)
 		{ return *this = complex(this->re+x, this->im); }
 	complex  operator-() const

@@ -80,8 +80,14 @@ void Tracer::OutputProgress(int nOrientation, long long count,
     string split = "\t";
 
     auto now = timer.SecondsElapsed();
+    bool ok = now - m_timeElapsed > m_logTime;
 
-    if (now - m_timeElapsed > m_logTime)
+    if (m_logTime == 0)
+    {
+        ok = true;
+    }
+
+    if (ok)
     {
         m_timeElapsed = now;
 //        EraseConsoleLine(60);
@@ -89,7 +95,7 @@ void Tracer::OutputProgress(int nOrientation, long long count,
         string progressLine = to_string((count*100)/nOrientation) +
                 "%" + split + "(" + to_string(zenith) + ";" +
                 to_string(azimuth) + ")" + split + timer.Elapsed() + split +
-                m_resultDirName+split+"beams:"+split+to_string(nBeams);
+                m_resultDirName+split+split+to_string(nBeams);
 
         cout << progressLine;
         RenameConsole(progressLine);
@@ -124,24 +130,24 @@ void Tracer::OutputStatisticsPO(CalcTimer &timer, long long orNumber, const stri
     time_t end = timer.Stop();
     string endTime = ctime(&end);
 
-    m_summary += "\nStart of calculation = " + startTime
-                 + "End of calculation   = " + endTime
-                 + "\nTotal time of calculation = " + totalTime
-                 + "\nTotal number of body orientation = " + to_string(orNumber);
+    m_summary += "\nStart of calc.: " + startTime
+                 + "End of calc.  : " + endTime
+                 + "\nTotal time  : " + totalTime
+                 + "\nTotal number of body orientations: " + to_string(orNumber);
 
     double passedEnergy = (m_handler->m_outputEnergy/m_incomingEnergy)*100;
 
-    m_summary += "\nTotal incoming energy = " + to_string(m_incomingEnergy)
-                 + "\nTotal outcoming energy (GO) = " + to_string(m_handler->m_outputEnergy)
-                 + " (S/4 = " + to_string(m_particle->Area()/4)
-                 + ")\nEnergy passed = " + to_string(passedEnergy) + '%';
+//    m_summary += "\nTotal incoming energy = " + to_string(m_incomingEnergy)
+//                 + "\nTotal outcoming energy (GO) = " + to_string(m_handler->m_outputEnergy)
+//                 + " (S/4 = " + to_string(m_particle->Area()/4)
+//                 + ")\nEnergy passed = " + to_string(passedEnergy) + '%';
 
     //	if (isNanOccured)
     //	{
     //		m_summary += "\n\nWARNING! NAN values occured. See 'log.txt'";
     //	}
 
-    ofstream out(path + "\\out.dat", ios::out);
+    ofstream out(path + "\\out.txt", ios::out);
 
     out << m_summary;
     out.close();
@@ -209,7 +215,7 @@ void Tracer::OutputStartTime(CalcTimer &timer)
 {
     m_startTime = timer.Start();
     cout << "Started at " << ctime(&m_startTime) << endl;
-    cout << "Progress\tOrientation\tTime passed\tOutput file"<< endl;
+    cout << "Prog.\tOrient.(i,j)\tTime\tName\tNBeams"<< endl;
 }
 
 void Tracer::SetHandler(Handler *handler)

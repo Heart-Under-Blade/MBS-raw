@@ -10,6 +10,7 @@
 
 #include <string>
 
+double RandomDouble(double min, double max);
 void EraseConsoleLine(int lenght);
 
 void RenameConsole(const std::string &title);
@@ -17,4 +18,4 @@ double DegToRad(double deg);
 double RadToDeg(double rad);
 std::string CreateFolder(std::string &name); // returned path to folder and created folder name
 std::string CreateDir(const std::string &name);
-std::string CreateUniqueFileName(const std::string &filename);
+std::string CreateUniqueFileName(const std::string &filename, const std::string &ext);

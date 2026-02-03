@@ -21,7 +21,7 @@ void TracerPOTotal::TraceRandom(const AngleRange &betaRange,
 
     CalcTimer timer;
     long long count = 0;
-    long long nOrientations = (betaRange.number+1) * (gammaRange.number+1);
+    long long nOrientations = (betaRange.number) * (gammaRange.number);
 
 #ifdef _DEBUG  /* DEB */
     ofstream outFile(m_resultDirName + "log.dat", ios::out);
@@ -167,4 +167,54 @@ void TracerPOTotal::TraceRandom(const AngleRange &betaRange,
 
     OutputStatisticsPO(timer, nOrientations, m_resultDirName);
 //#endif
+}
+
+void TracerPOTotal::TraceMonteCarlo(const AngleRange &betaRange,
+                                    const AngleRange &gammaRange,
+                                    int nOrientations)
+{
+    CalcTimer timer;
+    long long count = 0;
+
+    ofstream outFile(m_resultDirName + ".dat", ios::out);
+
+    if (!outFile.is_open())
+    {
+        std::cerr << "Error! File \"" << m_resultDirName << "\" was not opened. "
+                  << __FUNCTION__;
+
+        throw std::exception();
+    }
+
+    vector<Beam> outBeams;
+    double beta, gamma;
+    timer.Start();
+
+    long long nTacts;
+    asm("rdtsc" : "=A"(nTacts));
+    srand(nTacts);
+//    srand(static_cast<unsigned>(time(0)));
+
+    for (int i = 0; i < nOrientations; ++i)
+    {
+        beta = RandomDouble(0, 1)*betaRange.max;
+        gamma = RandomDouble(0, 1)*gammaRange.max;
+
+        m_particle->Rotate(beta, gamma, 0);
+        m_scattering->ScatterLight(beta, gamma, outBeams);
+
+        m_handler->HandleBeams(outBeams, sin(beta));
+        outBeams.clear();
+
+        ++count;
+        OutputProgress(nOrientations, count, i, i, timer, outBeams.size());
+    }
+
+    m_handler->WriteTotalMatricesToFile(m_resultDirName);
+
+    std::string dir = CreateFolder(m_resultDirName);
+    m_resultDirName = dir + m_resultDirName + '\\' + m_resultDirName;
+    m_handler->WriteMatricesToFile(m_resultDirName, m_incomingEnergy);
+    OutputStatisticsPO(timer, nOrientations, dir);
+    outFile.close();
 }

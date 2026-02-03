@@ -11,19 +11,24 @@ using namespace std;
 #define MAX_PATH 4096
 #endif
 
+double RandomDouble(double min, double max)
+{
+    return min + double(rand())/(double(RAND_MAX/(max - min)));
+}
+
 void RenameConsole(const string &title)
 {
 //	LPCWSTR t = title.c_str();
 //    SetConsoleTitleA(title.c_str());
 }
 
-string CreateUniqueFileName(const string &filename)
+string CreateUniqueFileName(const string &filename, const string &ext)
 {
-    string name = filename + ".dat";
+    string name = filename + ext;
 
     for (int i = 1; ifstream(name).is_open(); ++i)
     {
-        name = filename + '(' + to_string(i) + ')' + ".dat";
+        name = filename + '(' + to_string(i) + ')' + ext;
     }
 
     return name;

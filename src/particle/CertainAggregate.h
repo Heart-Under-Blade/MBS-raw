@@ -9,6 +9,7 @@ public:
 
 	void GetParticalFacetIdRangeByFacetId(int id, int &begin, int &end) const override;
 
+    void Resize(double size);
 protected:
 	void SetFacetParams() override;
 };

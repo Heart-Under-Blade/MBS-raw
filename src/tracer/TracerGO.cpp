@@ -31,12 +31,12 @@ void TracerGO::TraceRandom(const AngleRange &betaRange, const AngleRange &gammaR
     double cs_beta = 0.0;
     long long count = 0;
 
-    for (int i = 0; i < betaRange.number; ++i)
+    for (int i = 0; i <= betaRange.number; ++i)
 	{
-        beta = i*betaRange.step;
+        beta = beta = betaRange.min + i*betaRange.step;
         CalcCsBeta(betaNorm, beta, betaRange, gammaRange, normIndex, cs_beta);
 
-        for (int j = 0; j < gammaRange.number; ++j)
+        for (int j = 0; j <= gammaRange.number; ++j)
 		{
 			gamma = (j + 0.5)*gammaRange.step;
 
@@ -49,7 +49,18 @@ void TracerGO::TraceRandom(const AngleRange &betaRange, const AngleRange &gammaR
 #endif
 //			m_handler->WriteLog(to_string(i) + ", " + to_string(j) + " ");
 //			OutputOrientationToLog(i, j, logfile);
-            OutputProgress(orNum, ++count, i,j, timer, outBeams.size());
+            if (m_logTime == 0)
+            {
+                OutputProgress(orNum, ++count,
+                               std::lround(RadToDeg(beta)),
+                               std::lround(RadToDeg(gamma)), timer,
+                               outBeams.size());
+            }
+            else
+            {
+                OutputProgress(orNum, ++count, i,j, timer, outBeams.size());
+            }
+
             outBeams.clear();
 		}
 
@@ -74,7 +85,64 @@ void TracerGO::TraceFixed(const double &beta, const double &gamma)
 //	double D_tot = CalcTotalScatteringEnergy();
 
     m_handler->WriteMatricesToFile(m_resultDirName, 1000);
-//	WriteStatisticsToFileGO(1, D_tot, 1, timer); // TODO: раскомментить
+    //	WriteStatisticsToFileGO(1, D_tot, 1, timer); // TODO: раскомментить
+}
+
+void TracerGO::TraceMonteCarlo(const AngleRange &betaRange, const AngleRange &gammaRange, int nOrientations)
+{
+#ifdef _CHECK_ENERGY_BALANCE
+    m_incomingEnergy = 0;
+    m_outcomingEnergy = 0;
+#endif
+    vector<Beam> outBeams;
+    double beta, gamma;
+
+    CalcTimer timer;
+    OutputStartTime(timer);
+
+    string dir = CreateFolder(m_resultDirName);
+    string fulldir = dir + m_resultDirName + '\\';
+
+    long long nTacts;
+    asm("rdtsc" : "=A"(nTacts));
+    srand(nTacts);
+    cout << endl << "NTacts = " << nTacts << endl;
+//    srand(static_cast<unsigned>(time(0)));
+    long long count = 0;
+
+    for (int i = 0; i < nOrientations; ++i)
+    {
+        beta = RandomDouble(0, 1)*betaRange.max;
+        gamma = RandomDouble(0, 1)*gammaRange.max;
+
+        try
+        {
+            m_particle->Rotate(beta, gamma, 0);
+            m_scattering->ScatterLight(beta, gamma, outBeams);
+            m_handler->HandleBeams(outBeams, sin(beta));
+#ifdef _CHECK_ENERGY_BALANCE
+            m_incomingEnergy += m_scattering->GetIncedentEnergy()*sin(beta);
+#endif
+        }
+        catch (...)
+        {
+        }
+
+        outBeams.clear();
+
+        OutputProgress(nOrientations, ++count, i, i, timer, outBeams.size());
+    }
+
+    double norm = CalcNorm(nOrientations);
+    m_handler->SetNormIndex(norm);
+
+    m_outcomingEnergy = ((HandlerGO*)m_handler)->ComputeTotalScatteringEnergy();
+
+    m_resultDirName = dir + m_resultDirName + '\\' + m_resultDirName;
+
+    m_handler->WriteMatricesToFile(m_resultDirName, m_incomingEnergy);
+    OutputSummary(nOrientations, timer);
+
 }
 
 double TracerGO::CalcNorm(long long orNum)
@@ -108,7 +176,7 @@ void TracerGO::OutputSummary(int orNumber, CalcTimer &timer)
 #endif
 
 	// out << "\nAveraged cross section = " << incomingEnergy*NRM;
-	ofstream out(m_resultDirName+"_out.dat", ios::out);
+    ofstream out(m_resultDirName+"_out.txt", ios::out);
 	out << m_summary;
 	out.close();
 

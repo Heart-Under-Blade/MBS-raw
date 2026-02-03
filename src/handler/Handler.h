@@ -29,24 +29,34 @@ public:
             double az = i * azinuthStep;
             sincos(az, &sinAz, &cosAz);
 
-            vf.push_back(Point3d(-sinAz ,cosAz ,0));
             directions.push_back(std::vector<Point3d>());
+            vf.push_back(std::vector<Point3d>());
 
             for (int j = 0; j <= nZenith; ++j)
             {
                 double zen = zenithStart + (j * zenithStep);
                 sincos(zen, &sinZen, &cosZen);
-//#ifdef _DEBUG // DEB
-//                if (i == 1 && j == 70)
+#ifdef _DEBUG // DEB
+//                if (i == 1 && j == )
 //                    int fff = 0;
-//#endif
+#endif
                 Point3d dir(sinZen*cosAz, sinZen*sinAz, -cosZen);
                 directions[i].push_back(dir);
+
+                if (dir.z >= 1-DBL_EPSILON)
+                {
+                    vf[i].push_back(-incidentLight.polarizationBasis);
+                }
+                else if (dir.z <= DBL_EPSILON-1)
+                {
+                    vf[i].push_back(incidentLight.polarizationBasis);
+                }
+                else
+                {
+                    vf[i].push_back(Point3d(-sinAz ,cosAz ,0));
+                }
             }
         }
-
-        vf.pop_back();
-        vf.push_back(-incidentLight.polarizationBasis);
     }
 
 public:
@@ -57,7 +67,7 @@ public:
     double azinuthStep;
     double zenithStep;
 
-    std::vector<Point3d> vf;
+    std::vector<std::vector<Point3d>> vf;
     std::vector<std::vector<Point3d>> directions;
 };
 
@@ -263,6 +273,8 @@ public:
     double m_outputEnergy = 0;
 
     std::ofstream *betaFile;
+    int m_fixedItr = -1;
+
 protected:
     double BeamCrossSection(const Beam &beam) const;
 
