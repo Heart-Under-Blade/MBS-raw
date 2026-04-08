@@ -274,7 +274,7 @@ complex Handler::DiffractInclineAbs(const BeamInfo &info, const Beam &beam,
 
     if (abs(B) > abs(A))
     {
-        for (int i = startIndex; i != endIndex; i = /*info.order ? i-1 :*/ i+1)
+        for (int i = startIndex; i != endIndex; i = info.order ? i-1 : i+1)
         {
             p2 = ChangeCoordinateSystem(info.horAxis, info.verAxis,
                                         info.normald, beam.arr[i]) - info.projectedCenter;
@@ -331,7 +331,7 @@ complex Handler::DiffractInclineAbs(const BeamInfo &info, const Beam &beam,
     }
     else
     {
-        for (int i = startIndex; i != endIndex; i = /*info.order ? i-1 :*/ i+1)
+        for (int i = startIndex; i != endIndex; i = info.order ? i-1 : i+1)
         {
             p2 = ChangeCoordinateSystem(info.horAxis, info.verAxis, info.normald,
                                         beam.arr[i]) - info.projectedCenter;
@@ -438,13 +438,13 @@ complex Handler::DiffractIncline(const BeamInfo &info, const Beam &beam,
 
     int begin, startIndex, endIndex;
 
-//    if (info.order)
+    if (info.order)
     {
-//        begin = 0;
-//        startIndex = beam.nVertices-1;
-//        endIndex = -1;
+        begin = 0;
+        startIndex = beam.nVertices-1;
+        endIndex = -1;
     }
-//    else
+    else
     {
         begin = beam.nVertices-1;
         startIndex = 0;
@@ -457,7 +457,7 @@ complex Handler::DiffractIncline(const BeamInfo &info, const Beam &beam,
 
     if (absB > absA)
     {
-        for (int i = startIndex; i != endIndex; i = /*info.order ? i-1 :*/ i+1)
+        for (int i = startIndex; i != endIndex; i = info.order ? i-1 : i+1)
         {
             p2 = ChangeCoordinateSystem(info.horAxis, info.verAxis,
                                         info.normald, beam.arr[i]) - info.projectedCenter;
@@ -494,7 +494,7 @@ complex Handler::DiffractIncline(const BeamInfo &info, const Beam &beam,
     }
     else
     {
-        for (int i = startIndex; i != endIndex; i = /*info.order ? i-1 :*/ i+1)
+        for (int i = startIndex; i != endIndex; i = info.order ? i-1 : i+1)
         {
             p2 = ChangeCoordinateSystem(info.horAxis, info.verAxis,
                                         info.normald, beam.arr[i]) - info.projectedCenter;

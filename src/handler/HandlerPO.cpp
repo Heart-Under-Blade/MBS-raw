@@ -267,8 +267,8 @@ BeamInfo HandlerPO::ComputeBeamInfo(Beam &beam)
 
     if (!info.order)
     {
-        //info.normal = -info.normal;
-//        info.normald = -info.normald;
+        info.normal = -info.normal;
+        info.normald = -info.normald;
     }
 
     m_isBadBeam = false;
