@@ -14,7 +14,7 @@ void Splitting::ComputeRiParams(const complex &ri)
     double im = imag(m_ri);
     m_cRiRe = re*re - im*im;
     m_cRiRe2 = m_cRiRe * m_cRiRe;
-    m_cRiIm = 4*re*re*im;
+    m_cRiIm = 4*re*re*im*im;
 }
 
 void Splitting::ComputeSplittingParams(const Point3f &dir, const Point3f &normal)

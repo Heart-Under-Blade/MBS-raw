@@ -53,7 +53,7 @@ void TracerPO::TraceFixed(const double &beta, const double &gamma)
 
 	double b = DegToRad(beta);
 	double g = DegToRad(gamma);
-    m_particle->Rotate(beta, gamma, 0);
+    m_particle->Rotate(b, g, 0);
 	m_scattering->ScatterLight(b, g, outBeams);
 
     m_handler->HandleBeams(outBeams, 1);

@@ -9,6 +9,9 @@ using namespace std;
 #include <windows.h>
 #else
 #define MAX_PATH 4096
+#include <sys/stat.h>
+#include <errno.h>
+#include <unistd.h>
 #endif
 
 double RandomDouble(double min, double max)
@@ -64,7 +67,32 @@ string CreateFolder(string &name)
     name += num;
     return curDir;
 #else
-    return "";
+    // Linux: create directory, append (N) if already exists
+    char cwd[MAX_PATH];
+    if (!getcwd(cwd, MAX_PATH))
+    {
+        cerr << "Error getting current directory" << endl;
+        return "";
+    }
+
+    string base = string(cwd) + "/" + name;
+    string dirPath = base;
+    string num = "";
+
+    int rc = mkdir(dirPath.c_str(), 0755);
+    if (rc != 0 && errno == EEXIST)
+    {
+        for (int i = 1; ; ++i)
+        {
+            num = "(" + to_string(i) + ")";
+            dirPath = base + num;
+            rc = mkdir(dirPath.c_str(), 0755);
+            if (rc == 0 || errno != EEXIST) break;
+        }
+    }
+
+    name += num;
+    return string(cwd) + "/";
 #endif
 }
 

@@ -67,7 +67,7 @@ Beam::Beam(const Polygon &other)
 }
 
 Beam::Beam(Beam &&other)
-	: Polygon(other)
+	: Polygon(other), J(other.J)
 {
 	Copy(other);
 	SetDefault(other);
