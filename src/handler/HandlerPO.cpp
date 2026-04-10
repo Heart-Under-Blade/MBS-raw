@@ -98,8 +98,8 @@ void HandlerPO::WriteGroupMatrices(Arr2D &matrices, const std::string &name)
             Lp[2][2] = Lp[1][1];
 
             Ln = Lp;
-            Ln[1][2] *= -1;
-            Ln[2][1] *= -1;
+            Ln[1][2] = -Lp[1][2];
+            Ln[2][1] = -Lp[2][1];
 
             if (t == 0)
             {
