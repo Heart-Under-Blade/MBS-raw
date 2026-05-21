@@ -11,7 +11,7 @@ HandlerPOTotal::HandlerPOTotal(Particle *particle, Light *incidentLight, int nTh
     betaMueller = new matrix(4, 4);
 }
 
-void HandlerPOTotal::WriteMatricesToFile(std::string &destName, double nrg)
+void HandlerPOTotal::WriteMatricesToFile(std::string &destName, double nrg, bool isCoh)
 {
     std::ofstream outFile(destName + ".dat", std::ios::out);
 
@@ -31,21 +31,21 @@ void HandlerPOTotal::WriteMatricesToFile(std::string &destName, double nrg)
     auto &Lp = *m_Lp;
     auto &Ln = *m_Ln;
 
-    int &nZen = m_sphere.nZenith;
-    double &dZen = m_sphere.zenithStep;
-    int &nAz = m_sphere.nAzimuth;
+    int &nZen = sphere.nZenith;
+    double &dZen = sphere.zenithStep;
+    int &nAz = sphere.nAzimuth;
 
     for (int iZen = 0; iZen <= nZen; ++iZen)
 //    for (int iZen = nZen; iZen >= 0; --iZen)
     {
         Msum.Fill(0.0);
-        double radZen = m_sphere.zenithStart + iZen*dZen;
+        double radZen = sphere.zenithStart + iZen*dZen;
 //        double tt = RadToDeg(m_sphere.zenithEnd) - RadToDeg((t*dT));
 
-        for (int iAz = 0; iAz <= nAz; ++iAz)
+        for (int iAz = 0; iAz < nAz; ++iAz)
         {
-            double radAz = -iAz*m_sphere.azinuthStep;
-            matrix m = M(iAz, iZen);
+            double radAz = -iAz*sphere.azinuthStep;
+            matrix m = isCoh ? Mcoh(iAz, iZen) : Mincoh(iAz, iZen);
 
             Lp[1][1] = cos(2*radAz);
             Lp[1][2] = sin(2*radAz);
@@ -68,13 +68,17 @@ void HandlerPOTotal::WriteMatricesToFile(std::string &destName, double nrg)
             {
                 Msum += m*Lp;
             }
+
+//            if (iZen == 180)
+//                std::cout << Msum[0][0]  << std::endl;
+
         }
 
         double _2Pi_dcos = (radZen > M_PI-__FLT_EPSILON__ || radZen < __FLT_EPSILON__) ?
                     1.0-cos(0.5*dZen) :
                     cos((iZen-0.5)*dZen)-cos((iZen+0.5)*dZen);
 
-        Msum /= m_sphere.nAzimuth;
+        Msum /= sphere.nAzimuth;
         _2Pi_dcos *= M_2PI;
         outFile << std::endl << RadToDeg(radZen) << ' ' << _2Pi_dcos << ' ' /*<< nrg << ' '*/;
         outFile << Msum;
@@ -92,9 +96,9 @@ void HandlerPOTotal::AddToMueller()
     {
         auto &diffM = m_diffractedMatrices[q];
 
-        for (int t = 0; t <= m_sphere.nZenith; ++t)
+        for (int t = 0; t <= sphere.nZenith; ++t)
         {
-            for (int p = 0; p <= m_sphere.nAzimuth; ++p)
+            for (int p = 0; p < sphere.nAzimuth; ++p)
             {
                 matrix m = Mueller(diffM(p, t));
 #ifdef _DEBUG // DEB
@@ -104,6 +108,9 @@ void HandlerPOTotal::AddToMueller()
                 if (q == 0 && t == 0 && p == 0)
                 {
                     *betaMueller += m*normIndexGamma;
+#ifdef _DEBUG // DEB
+//                    std::cout << fff[0] << std::endl;
+#endif
                 }
 
                 m *= m_sinZenith;
@@ -118,13 +125,13 @@ void HandlerPOTotal::AddToMueller()
 //                    m_logFile << p << ' ' << t << ' ' << sum << std::endl;
                 }
 #endif
-                M.insert(p, t, m);
+                Mcoh.insert(p, t, m);
             }
         }
     }
 #ifdef _DEBUG // DEB
-    double fffefwe = M(0,0)[0][0];
-    int ff = 0;
+//    double fffefwe = M(0,0)[0][0];
+//    int ff = 0;
 #endif
 }
 

@@ -18,9 +18,9 @@ bool ScatteringConvex::ScatterLight(double beta, double gamma,
     for (int facetID = 0; facetID < m_particle->nFacets; ++facetID)
     {
         const Point3f &inNormal = m_facets[facetID].in_normal;
-        splitting.ComputeCosA(m_incidentDir, inNormal);
+        splitter.ComputeCosA(m_incidentDir, inNormal);
 
-        if (!splitting.IsIncident()) /// beam is not incident to this facet
+        if (!splitter.IsIncident()) /// beam is not incident to this facet
         {
             continue;
         }
@@ -93,9 +93,9 @@ bool ScatteringConvex::SplitSecondaryBeams(Beam &incidentBeam, int facetID,
 
     // ext. normal uses in this calculating
     const Point3f &normal = m_facets[facetID].ex_normal;
-    splitting.ComputeCosA(normal, incidentDir);
+    splitter.ComputeCosA(normal, incidentDir);
 
-    if (!splitting.IsIncident())
+    if (!splitter.IsIncident())
     {
         return false;
     }
@@ -113,37 +113,37 @@ bool ScatteringConvex::SplitSecondaryBeams(Beam &incidentBeam, int facetID,
         int fff = 0;
 #endif
     inBeam = outBeam;
-    splitting.ComputeSplittingParams(incidentBeam.direction, normal);
+    splitter.ComputeSplittingParams(incidentBeam.direction, normal);
 //    ComputePolarisationParams(incidentBeam.direction, normal, incidentBeam);
 
-    if (!splitting.IsNormalIncidence())
+    if (!splitter.IsNormalIncidence())
     {	// regular incidence
         Beam incBeam = incidentBeam;
 
         ComputePolarisationParams(incidentBeam.direction, normal, incBeam);
 
-        if (!splitting.IsCompleteReflection())
+        if (!splitter.IsCompleteReflection())
         {
             outBeam.id = RecomputeTrackId(incidentBeam.id, facetID);
 
-            splitting.ComputeRegularBeamsParams(normal, incBeam, inBeam, outBeam);
+            splitter.ComputeRegularBeamsParams(normal, incBeam, inBeam, outBeam);
             outBeam.nActs = incidentBeam.nActs + 1;
-            outBeam.opticalPath += splitting.ComputeOutgoingOpticalPath(outBeam); // добираем оптический путь
+            outBeam.opticalPath += splitter.ComputeOutgoingOpticalPath(outBeam); // добираем оптический путь
             outBeam.lastFacetId = facetID;
             outBeams.push_back(outBeam);
         }
         else // complete internal reflection incidence
         {
-            splitting.ComputeCRBeamParams(normal, incBeam, inBeam);
+            splitter.ComputeCRBeamParams(normal, incBeam, inBeam);
         }
     }
     else
     {	// normal incidence
-        splitting.ComputeNormalBeamParams(incidentBeam, inBeam, outBeam);
+        splitter.ComputeNormalBeamParams(incidentBeam, inBeam, outBeam);
 
         outBeam.nActs = incidentBeam.nActs + 1;
         outBeam.id = RecomputeTrackId(incidentBeam.id, facetID);
-        double path = splitting.ComputeOutgoingOpticalPath(outBeam); // добираем оптический путь
+        double path = splitter.ComputeOutgoingOpticalPath(outBeam); // добираем оптический путь
         outBeam.opticalPath += path;
         outBeam.lastFacetId = facetID;
         outBeams.push_back(outBeam);

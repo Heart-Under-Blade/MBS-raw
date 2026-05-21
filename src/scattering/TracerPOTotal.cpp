@@ -21,7 +21,7 @@ void TracerPOTotal::TraceRandom(const AngleRange &betaRange,
 
     CalcTimer timer;
     long long count = 0;
-    long long nOrientations = (betaRange.number) * (gammaRange.number);
+    long long nOrientations = (betaRange.number+1) * (gammaRange.number);
 
     vector<Beam> outBeams;
     double beta, gamma;
@@ -34,7 +34,7 @@ void TracerPOTotal::TraceRandom(const AngleRange &betaRange,
 #ifdef _WIN32
     m_resultDirName += '\\' + m_resultDirName;
 #else
-    m_resultDirName = dir + m_resultDirName;
+    m_resultDirName = dir + "/" + m_resultDirName;
 #endif
 
     m_handler->betaFile = new std::ofstream(m_resultDirName + "_beta.dat", ios::out);
@@ -52,12 +52,17 @@ void TracerPOTotal::TraceRandom(const AngleRange &betaRange,
         beta = betaRange.min + i*betaRange.step;
 
         double dcos;
-        CalcCsBeta(betaNorm, beta, betaRange, gammaRange, normIndex, dcos);
+        bool isPole = CalcCsBeta(betaNorm, beta, betaRange, gammaRange, normIndex, dcos);
         m_handler->SetSinZenith(dcos);
 
         for (int j = 0; j < gammaRange.number; ++j)
         {
-            gamma = gammaRange.min + j*gammaRange.step;
+//            if (j != 0 && isPole)
+//            {
+//                continue;
+//            }
+
+            gamma = gammaRange.min + (j+0.5)*gammaRange.step;
             m_particle->Rotate(/*M_PI-*/beta, /*M_PI+*/gamma, 0);
 
             if (!shadowOff)
@@ -78,7 +83,7 @@ void TracerPOTotal::TraceRandom(const AngleRange &betaRange,
 
             m_incomingEnergy += m_scattering->GetIncedentEnergy()*dcos;
 
-            OutputProgress(nOrientations, count, i, j, timer, outBeams.size());
+            OutputProgress(dir, nOrientations, count, i, j, timer, outBeams.size());
             outBeams.clear();
             ++count;
         }
@@ -94,7 +99,9 @@ void TracerPOTotal::TraceRandom(const AngleRange &betaRange,
 
     // m_handler->m_outputEnergy = m_handler->ComputeTotalScatteringEnergy();
     m_handler->WriteTotalMatricesToFile(m_resultDirName);
-    m_handler->WriteMatricesToFile(m_resultDirName, m_incomingEnergy);
+    m_handler->WriteMatricesToFile(m_resultDirName, m_incomingEnergy, true);
+    string incohName = m_resultDirName+string("_incoh");
+    m_handler->WriteMatricesToFile(incohName, m_incomingEnergy, false);
 
     OutputStatisticsPO(timer, nOrientations, m_resultDirName);
 }
@@ -137,14 +144,15 @@ void TracerPOTotal::TraceMonteCarlo(const AngleRange &betaRange,
         outBeams.clear();
 
         ++count;
-        OutputProgress(nOrientations, count, i, i, timer, outBeams.size());
+        OutputProgress(m_resultDirName, nOrientations, count, i, i, timer, outBeams.size());
     }
 
     m_handler->WriteTotalMatricesToFile(m_resultDirName);
 
     std::string dir = CreateFolder(m_resultDirName);
     m_resultDirName = dir + m_resultDirName + '\\' + m_resultDirName;
-    m_handler->WriteMatricesToFile(m_resultDirName, m_incomingEnergy);
+    m_handler->WriteMatricesToFile(m_resultDirName, m_incomingEnergy, true);
+    m_handler->WriteMatricesToFile(m_resultDirName, m_incomingEnergy, false);
     OutputStatisticsPO(timer, nOrientations, dir);
     outFile.close();
 }

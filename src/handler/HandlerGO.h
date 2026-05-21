@@ -24,7 +24,7 @@ protected:
 protected:
     matrix ComputeMueller(float zenAng, Beam &beam);
     void RotateMuller(const Point3f &dir, matrix &bf);
-    void AverageOverAlpha(int EDF, double norm, ContributionGO &contrib,
+    void BackAndForw(int EDF, double norm, ContributionGO &contrib,
                           const std::string &destDir);
 
     void WriteToFile(ContributionGO &contrib, double norm,

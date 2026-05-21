@@ -37,7 +37,7 @@ Tracer::~Tracer()
 {
 }
 
-void Tracer::CalcCsBeta(int betaNorm, double beta, const AngleRange &betaRange,
+bool Tracer::CalcCsBeta(int betaNorm, double beta, const AngleRange &betaRange,
                           const AngleRange &gammaRange, double normIndex, double &cs_beta)
 {
     if (betaNorm == 2)
@@ -55,8 +55,15 @@ void Tracer::CalcCsBeta(int betaNorm, double beta, const AngleRange &betaRange,
 
     cs_beta = cs_beta/normIndex;
 
-    if(fabs(beta)<=FLT_EPSILON || fabs(beta-M_PI)<=FLT_EPSILON)
-        cs_beta *= gammaRange.number;
+//    bool isPole = fabs(beta)<=FLT_EPSILON || fabs(beta-M_PI)<=FLT_EPSILON;
+
+//    if (isPole)
+//    {
+//        cs_beta *= gammaRange.number;
+//    }
+
+//    return isPole;
+    return true;
 }
 
 void Tracer::SetIncidentLight(Particle *particle)
@@ -74,7 +81,7 @@ void Tracer::OutputOrientationToLog(int i, int j, ostream &logfile)
     logfile.flush();
 }
 
-void Tracer::OutputProgress(int nOrientation, long long count,
+void Tracer::OutputProgress(string dir, int nOrientation, long long count,
                             int zenith, int azimuth, CalcTimer &timer, int nBeams)
 {
     string split = "\t";
@@ -95,7 +102,7 @@ void Tracer::OutputProgress(int nOrientation, long long count,
         string progressLine = to_string((count*100)/nOrientation) +
                 "%" + split + "(" + to_string(zenith) + ";" +
                 to_string(azimuth) + ")" + split + timer.Elapsed() + split +
-                m_resultDirName+split+split+to_string(nBeams);
+                dir+split+split+to_string(nBeams);
 
         cout << progressLine;
         RenameConsole(progressLine);

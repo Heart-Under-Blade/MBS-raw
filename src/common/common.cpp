@@ -39,85 +39,54 @@ string CreateUniqueFileName(const string &filename, const string &ext)
 
 string CreateFolder(string &name)
 {
-    char curDir[MAX_PATH] = ""; // current directory
+    string num = "";
 #ifdef _WIN32
-    char newDir[MAX_PATH]; // created directory
+    char curDir[MAX_PATH] = "";
 
-    // get the current directory, and store it
     if (!GetCurrentDirectoryA(MAX_PATH, curDir))
     {
         cerr << "Error getting current directory: #" << GetLastError();
     }
 
-    strcat(curDir, "\\");
-    strcpy(newDir, curDir);
-    strcat(newDir, name.c_str());
+    string basePath = string(curDir) + "\\" + name;
+    string dirPath = basePath;
 
-    char dirN[MAX_PATH];
-    strcpy(dirN, newDir);
-    string num = "";
-
-    for (int i = 1; !CreateDirectoryA(dirN, NULL); ++i)
+    for (int i = 1; !CreateDirectoryA(dirPath.c_str(), NULL); ++i)
     {
         num = "(" + to_string(i) + ")";
-        string dirName = newDir + num;
-        strcpy(dirN, dirName.c_str());
+        dirPath = basePath + num;
     }
-
-    name += num;
-    return curDir;
 #else
-    // Linux: create directory, append (N) if already exists
-    char cwd[MAX_PATH];
-    if (!getcwd(cwd, MAX_PATH))
+    string dirName = name;
+
+    for (int i = 1; mkdir(dirName.c_str(), 0755) != 0; ++i)
     {
-        cerr << "Error getting current directory" << endl;
-        return "";
+        num = "(" + to_string(i) + ")";
+        dirName = name + num;
     }
-
-    string base = string(cwd) + "/" + name;
-    string dirPath = base;
-    string num = "";
-
-    int rc = mkdir(dirPath.c_str(), 0755);
-    if (rc != 0 && errno == EEXIST)
-    {
-        for (int i = 1; ; ++i)
-        {
-            num = "(" + to_string(i) + ")";
-            dirPath = base + num;
-            rc = mkdir(dirPath.c_str(), 0755);
-            if (rc == 0 || errno != EEXIST) break;
-        }
-    }
-
-    name += num;
-    return string(cwd) + "/";
 #endif
+    return name + num;
 }
 
 string CreateDir(const string &name)
 {
-    string dirName;
+    string dirName = name;
 #ifdef _WIN32
-    char cdir[MAX_PATH];
-    cdir[0] = '\0';
-    strcat(cdir, name.c_str());
+    string dirPath = name;
 
-    char dirN[MAX_PATH];
-    strcpy(dirN, cdir);
-
-    for (int i = 1; !CreateDirectoryA(cdir, NULL); ++i)
+    for (int i = 1; !CreateDirectoryA(dirPath.c_str(), NULL); ++i)
     {
-        string dirName = dirN;
-        dirName += "(" + to_string(i) + ")";
-        strcpy(cdir, dirName.c_str());
+        dirPath = name + "(" + to_string(i) + ")";
     }
 
-    strcat(cdir, "\\");
-    dirName = cdir;
+    dirName = dirPath + "/";
 #else
-    dirName = name;
+    for (int i = 1; mkdir(dirName.c_str(), 0755) != 0; ++i)
+    {
+        dirName = name + "(" + to_string(i) + ")";
+    }
+
+    dirName += "/";
 #endif
     return dirName;
 }

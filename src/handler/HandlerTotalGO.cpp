@@ -13,8 +13,9 @@ void HandlerTotalGO::HandleBeams(std::vector<Beam> &beams, double sinZenith)
 
     for (Beam &beam : beams)
     {
-#ifdef _DEBUG // DEB
-//		m_logFile << beam.id << std::endl;
+#ifdef _DEBUG
+            if (beam.lastFacetId == 2)
+                int ffdfd = 0;
 #endif
         beam.RotateSpherical(-m_incidentLight->direction,
                              m_incidentLight->polarizationBasis);
@@ -27,18 +28,23 @@ void HandlerTotalGO::HandleBeams(std::vector<Beam> &beams, double sinZenith)
         const float &z = acos(beam.direction.cz);
         matrix m = ComputeMueller(RadToDeg(z), beam);
         m_totalContrib.AddMueller(z, m);
+
+//        matrix mmm = m_totalContrib.muellers(0, 180);
+//    std::cout << mmm[0][0] << " " << beam.lastFacetId << std::endl;
+//#ifdef _DEBUG
+//#endif
     }
 }
 
-void HandlerTotalGO::WriteMatricesToFile(std::string &destName, double nrg)
+void HandlerTotalGO::WriteMatricesToFile(std::string &destName, double nrg, bool isCoh)
 {
-//    AverageOverAlpha(true, m_normIndex, m_totalContrib, destName);
+    BackAndForw(true, m_normIndex, m_totalContrib, destName);
     WriteToFile(m_totalContrib, 1/*m_normIndex*/, destName + "_all");
 }
 
 void HandlerTotalGO::SetScatteringSphere(const ScatteringRange &grid)
 {
-    m_sphere = grid;
+    sphere = grid;
     m_totalContrib.SetStep(nTheta, grid.zenithEnd - grid.zenithStart);
 
     for (auto contr : m_tracksContrib)

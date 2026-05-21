@@ -13,7 +13,7 @@ using namespace std;
 Scattering::Scattering(Particle *particle, Light *incidentLight, bool isOpticalPath,
                        int nActs)
     : m_particle(particle),
-      splitting(isOpticalPath),
+      splitter(isOpticalPath),
       m_incidentLight(incidentLight),
       m_nActs(nActs)
 {
@@ -25,7 +25,7 @@ Scattering::Scattering(Particle *particle, Light *incidentLight, bool isOpticalP
     m_polarBasis = m_incidentLight->polarizationBasis;
 
     complex ri = m_particle->GetRefractiveIndex();
-    splitting.ComputeRiParams(ri);
+    splitter.ComputeRiParams(ri);
     double tmp = (real(ri)-1)/(real(ri)+1);
     EPS_BEAM_ENERGY = (0.25*0.25*m_particle->Area())/M_PI*tmp*tmp*1e-7;
 }
@@ -55,22 +55,22 @@ void Scattering::SetIncidentBeamOpticalParams(unsigned facetId,
                                               Beam &inBeam, Beam &outBeam)
 {
     const Point3f &normal = m_facets[facetId].in_normal;
-    splitting.ComputeCosA(m_incidentDir, normal);
+    splitter.ComputeCosA(m_incidentDir, normal);
 
-    if (!splitting.IsNormalIncidence()) // regular incidence
+    if (!splitter.IsNormalIncidence()) // regular incidence
     {
         Beam fakeIncidentBeam;
         fakeIncidentBeam.SetLight(*m_incidentLight);
         const Point3f &facetNormal = m_facets[facetId].in_normal;
         ComputePolarisationParams(-fakeIncidentBeam.direction, facetNormal,
                                   fakeIncidentBeam);
-        splitting.ComputeRegularBeamParamsExternal(facetNormal,
+        splitter.ComputeRegularBeamParamsExternal(facetNormal,
                                                      fakeIncidentBeam,
                                                      inBeam, outBeam);
     }
     else // normal incidence
     {
-        splitting.ComputeNormalBeamParamsExternal(*m_incidentLight,
+        splitter.ComputeNormalBeamParamsExternal(*m_incidentLight,
                                                     inBeam, outBeam);
     }
 }
@@ -93,12 +93,12 @@ void Scattering::SplitLightToBeams(int facetId, Beam &inBeam, Beam &outBeam)
 //	if (m_isOpticalPath)
     {
         Point3f p = inBeam.Center();
-        double path = splitting.ComputeIncidentOpticalPath(m_incidentDir, p);
+        double path = splitter.ComputeIncidentOpticalPath(m_incidentDir, p);
         inBeam.opticalPath = 0;
         outBeam.opticalPath = 0;
         inBeam.AddOpticalPath(path);
         outBeam.AddOpticalPath(path);
-        outBeam.opticalPath += splitting.ComputeOutgoingOpticalPath(outBeam);
+        outBeam.opticalPath += splitter.ComputeOutgoingOpticalPath(outBeam);
     }
 }
 
@@ -579,7 +579,7 @@ double Scattering::ComputeInternalOpticalPath(const Beam &beam,
         nextLoc = beam.GetLocationByActNumber(i-1);
 
         Point3f &exNormal = m_facets[track[i]].ex_normal;
-        dir = splitting.ChangeBeamDirection(dir, exNormal, loc, nextLoc);
+        dir = splitter.ChangeBeamDirection(dir, exNormal, loc, nextLoc);
 
         Point3f &inNormal = m_facets[track[i-1]].in_normal;
         p2 = ProjectPointToPlane(p1, dir, inNormal);

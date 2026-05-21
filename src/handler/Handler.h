@@ -13,7 +13,7 @@ class ScatteringRange
 {
 public:
     ScatteringRange(double zenStart, double zenEnd, int nAz, int nZen)
-        : zenithStart(zenStart), zenithEnd(zenEnd), nAzimuth(nAz), nZenith(nZen)
+        : zenithStart(zenStart), zenithEnd(zenEnd), nAzimuth(nAz+1), nZenith(nZen)
     {
         azinuthStep = M_2PI/nAz;
         zenithStep = (zenEnd - zenStart)/nZen;
@@ -27,7 +27,7 @@ public:
         double sinZen;
         double cosZen;
 
-        for (int i = 0; i <= nAzimuth; ++i)
+        for (int i = 0; i < nAzimuth; ++i)
         {
             double az = i * azinuthStep;
             sincos(az, &sinAz, &cosAz);
@@ -254,7 +254,7 @@ public:
     virtual void SetTracks(Tracks *tracks);
     Tracks *GetTracks() const;
     void SetScattering(Scattering *scattering);
-    virtual void WriteMatricesToFile(std::string &destName, double nrg);
+    virtual void WriteMatricesToFile(std::string &destName, double nrg, bool isCoh);
     virtual void WriteTotalMatricesToFile(const std::string &destName);
     void SetAbsorptionAccounting(bool value);
     virtual void SetScatteringSphere(const ScatteringRange &grid);
@@ -269,9 +269,10 @@ public:
 
     int nTheta;
     int m_nBadBeams;
+    bool isAbs2 = false;
     bool m_isBadBeam;
     bool isCoh = true;
-    ScatteringRange m_sphere;
+    ScatteringRange sphere;
     double normIndexGamma;
     double m_outputEnergy = 0;
 
@@ -333,5 +334,5 @@ protected:
     double m_eps3;
 
 private:
-    void ExtropolateOpticalLenght(Beam &beam, const std::vector<int> &tr);
+//    void ExtropolateOpticalLenght(Beam &beam, const std::vector<int> &tr);
 };

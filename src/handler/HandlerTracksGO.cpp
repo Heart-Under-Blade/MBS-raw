@@ -38,7 +38,7 @@ void HandlerTracksGO::HandleBeams(std::vector<Beam> &beams, double sinZenith)
     }
 }
 
-void HandlerTracksGO::WriteMatricesToFile(std::string &destName, double nrg)
+void HandlerTracksGO::WriteMatricesToFile(std::string &destName, double nrg, bool isCoh)
 {
 //	string dir = CreateFolder(destName);
 //	dir += destName + "\\";
@@ -53,7 +53,7 @@ void HandlerTracksGO::WriteMatricesToFile(std::string &destName, double nrg)
         }
     }
 
-    AverageOverAlpha(true, m_normIndex, m_totalContrib, destName);
+    BackAndForw(true, m_normIndex, m_totalContrib, destName);
     WriteToFile(m_totalContrib, m_normIndex, destName + "_all");
 }
 

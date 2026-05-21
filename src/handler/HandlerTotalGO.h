@@ -9,7 +9,7 @@ public:
                    float wavelength);
 
     void HandleBeams(std::vector<Beam> &beams, double sinZenith) override;
-    void WriteMatricesToFile(std::string &destName, double nrg) override;
+    void WriteMatricesToFile(std::string &destName, double nrg, bool isCoh) override;
 
     void SetScatteringSphere(const ScatteringRange &grid) override;
 };

@@ -33,7 +33,7 @@ HandlerPO::HandlerPO(Particle *particle, Light *incidentLight, int nTheta,
 void HandlerPO::CleanJ()
 {
     m_diffractedMatrices.clear();
-    Arr2DC tmp(m_sphere.nAzimuth + 1, m_sphere.nZenith + 1, 2, 2);
+    Arr2DC tmp(sphere.nAzimuth, sphere.nZenith + 1, 2, 2);
     tmp.ClearArr();
 
     for (unsigned q = 0; q < m_tracks->size() + 1; q++)
@@ -42,28 +42,28 @@ void HandlerPO::CleanJ()
     }
 }
 
-void HandlerPO::WriteMatricesToFile(std::string &destName, double nrg)
+void HandlerPO::WriteMatricesToFile(std::string &destName, double nrg, bool isCoh)
 {
 //    if (!m_tracks->shouldComputeTracksOnly)
     {
-        std::ofstream outFile(destName, std::ios::app);
+        std::ofstream file(destName, std::ios::app);
 
-        outFile /*<< std::to_string(m_sphere.radius) << ' '*/
-                << std::to_string(m_sphere.nZenith) << ' '
-                << std::to_string(m_sphere.nAzimuth+1);
+        file /*<< std::to_string(m_sphere.radius) << ' '*/
+                << std::to_string(sphere.nZenith) << ' '
+                << std::to_string(sphere.nAzimuth);
 
-        for (int t = 0; t <= m_sphere.nZenith; ++t)
+        for (int t = 0; t <= sphere.nZenith; ++t)
         {
-            double tt = RadToDeg(t*m_sphere.zenithStep);
+            double tt = RadToDeg(t*sphere.zenithStep);
 
-            for (int p = 0; p <= m_sphere.nAzimuth; ++p)
+            for (int p = 0; p < sphere.nAzimuth; ++p)
             {
-                double fi = -((double)p)*m_sphere.azinuthStep;
+                double fi = -((double)p)*sphere.azinuthStep;
                 double degPhi = RadToDeg(-fi);
-                outFile << std::endl << tt << " " << degPhi << " " << nrg << " ";
+                file << std::endl << tt << " " << degPhi << " " << nrg << " ";
 
-                matrix m = M(p, t);
-                outFile << m;
+                matrix m = isCoh ? Mcoh(p, t) : Mincoh(p, t);
+                file << m;
             }
         }
     }
@@ -77,19 +77,19 @@ void HandlerPO::WriteGroupMatrices(Arr2D &matrices, const std::string &name)
     std::ofstream outFile(name, std::ios::out);
 
     outFile /*<< std::to_string(m_sphere.radius) << ' '*/
-            << std::to_string(m_sphere.nZenith) << ' '
-            << std::to_string(m_sphere.nAzimuth+1);
+            << std::to_string(sphere.nZenith) << ' '
+            << std::to_string(sphere.nAzimuth);
 
     matrix sum(4, 4);
 
-    for (int t = m_sphere.nZenith; t >= 0; --t)
+    for (int t = sphere.nZenith; t >= 0; --t)
     {
         sum.Fill(0.0);
-        double tt = RadToDeg(m_sphere.zenithEnd-m_sphere.zenithStart) - RadToDeg(t*m_sphere.zenithStep);
+        double tt = RadToDeg(sphere.zenithEnd-sphere.zenithStart) - RadToDeg(t*sphere.zenithStep);
 
-        for (int p = 0; p <= m_sphere.nAzimuth; ++p)
+        for (int p = 0; p < sphere.nAzimuth; ++p)
         {
-            double fi = -((double)p)*m_sphere.azinuthStep;
+            double fi = -((double)p)*sphere.azinuthStep;
             matrix m = matrices(p, t);
 
             Lp[1][1] = cos(2*fi);
@@ -98,14 +98,14 @@ void HandlerPO::WriteGroupMatrices(Arr2D &matrices, const std::string &name)
             Lp[2][2] = Lp[1][1];
 
             Ln = Lp;
-            Ln[1][2] = -Lp[1][2];
-            Ln[2][1] = -Lp[2][1];
+            Ln[1][2] *= -1;
+            Ln[2][1] *= -1;
 
             if (t == 0)
             {
                 sum += Lp*m*Lp;
             }
-            else if (t == m_sphere.nZenith-1)
+            else if (t == sphere.nZenith-1)
             {
                 sum += Ln*m*Lp; // OPT: вынести Ln в отдельный случай
             }
@@ -116,7 +116,7 @@ void HandlerPO::WriteGroupMatrices(Arr2D &matrices, const std::string &name)
         }
 
         outFile << std::endl << tt << " ";
-        outFile << sum/m_sphere.nAzimuth;
+        outFile << sum/sphere.nAzimuth;
     }
 }
 
@@ -134,7 +134,7 @@ void HandlerPO::WriteTotalMatricesToFile(const std::string &destName)
             }
         }
 
-        WriteGroupMatrices(M, destName + "_total.dat");
+        WriteGroupMatrices(Mcoh, destName + "_total.dat");
     }
     std::cout << std::endl << destName;
 }
@@ -200,7 +200,9 @@ matrixC HandlerPO::ApplyDiffraction(const Beam &beam, const BeamInfo &info,
     matrixC jones_rot(2, 2);
     RotateJones(beam, info, vf, direction, jones_rot);
 
-    complex fresnel = (m_hasAbsorption && beam.lastFacetId != __INT_MAX__ && beam.nActs > 1)
+    complex fresnel = (m_hasAbsorption &&
+                       beam.lastFacetId != __INT_MAX__ &&
+            beam.nActs > 1 && isAbs2)
             ? DiffractInclineAbs(info, beam, direction)
             : DiffractIncline(info, beam, direction);
 
@@ -244,13 +246,13 @@ void HandlerPO::AddToMueller()
 {
     for (size_t q = 0; q < m_diffractedMatrices.size(); ++q)
     {
-        for (int t = 0; t <= m_sphere.nZenith; ++t)
+        for (int t = 0; t <= sphere.nZenith; ++t)
         {
-            for (int p = 0; p <= m_sphere.nAzimuth; ++p)
+            for (int p = 0; p < sphere.nAzimuth; ++p)
             {
                 matrix m = Mueller(m_diffractedMatrices[q](p, t));
                 m *= m_normIndex;
-                M.insert(p, t, m);
+                Mcoh.insert(p, t, m);
                 m_groupMatrices[q].insert(p, t, m);
             }
         }
@@ -279,7 +281,8 @@ BeamInfo HandlerPO::ComputeBeamInfo(Beam &beam)
     info.projectedCenter = ChangeCoordinateSystem(info.horAxis, info.verAxis,
                                                   info.normald, info.center);
 
-    if (m_hasAbsorption && beam.lastFacetId != __INT_MAX__ && beam.nActs > 1)
+    if (m_hasAbsorption && beam.lastFacetId != __INT_MAX__ && beam.nActs > 1
+            && isAbs2)
     {
         ComputeOpticalLengths(beam, info);
         ComputeLengthIndices(beam, info);
@@ -309,13 +312,14 @@ void HandlerPO::SetBackScatteringConus(double radAngle)
 
 void HandlerPO::SetScatteringSphere(const ScatteringRange &grid)
 {
-    m_sphere = grid;
-    M = Arr2D(m_sphere.nAzimuth+1, m_sphere.nZenith+1, 4, 4);
+    sphere = grid;
+    Mcoh = Arr2D(sphere.nAzimuth, sphere.nZenith+1, 4, 4);
+    Mincoh = Arr2D(sphere.nAzimuth, sphere.nZenith+1, 4, 4);
 
-    m_sphere.ComputeSphereDirections(*m_incidentLight);
+    sphere.ComputeSphereDirections(*m_incidentLight);
 }
 
-void HandlerPO::ComputeOpticalLengths(const Beam &beam, BeamInfo &info)
+void HandlerPO::ComputeOpticalLengths(Beam &beam, BeamInfo &info)
 {
     std::vector<int> tr;
     Tracks::RecoverTrack(beam, m_particle->nFacets, tr);
@@ -331,13 +335,13 @@ void HandlerPO::ComputeOpticalLengths(const Beam &beam, BeamInfo &info)
 //		int fff = 0;
 //#endif
 
-//	double path = m_scattering->ComputeInternalOpticalPath(beam, beam.Center(), tr);
+    double path = m_scattering->ComputeInternalOpticalPath(beam, beam.Center(), tr);
 
-//	if (path > DBL_EPSILON)
-//	{
-//		double abs = exp(m_cAbs*path);
-//		beam.J *= abs;
-//	}
+    if (path > DBL_EPSILON)
+    {
+        double abs = exp(m_cAbs*path);
+        beam.J *= abs;
+    }
 
     //	ExtropolateOpticalLenght(beam, tr);
 }
@@ -357,24 +361,6 @@ void HandlerPO::HandleBeams(std::vector<Beam> &beams, double sinZenith)
         }
 
         groupId = 0;
-#ifdef _DEBUG // DEB
-        // if (beam.id == 423)
-        //     int dsdsdsd = 0;
-//		std::vector<int> tr;
-//		Tracks::RecoverTrack(beam, m_particle->nFacets, tr);
-//		if (tr.size() == 2 && tr[0] == 2 && tr[1] == 4)
-//			int fff = 0;
-#endif
-//		if (m_tracks->shouldComputeTracksOnly)
-//		{
-//			groupId = m_tracks->FindGroupByTrackId(beam.id);
-
-            if (groupId < 0)
-            {
-//				groupId = 0;
-//				continue;
-            }
-//		}
 
         beam.polarizationBasis = beam.RotateSpherical(
                     -m_incidentLight->direction,
@@ -387,7 +373,7 @@ void HandlerPO::HandleBeams(std::vector<Beam> &beams, double sinZenith)
             continue;
         }
 
-        if (m_hasAbsorption && beam.lastFacetId != __INT_MAX__ && beam.lastFacetId != -1)
+        if (m_hasAbsorption && beam.lastFacetId != __INT_MAX__ && beam.lastFacetId != -1 && beam.nActs > 0)
         {
             ApplyAbsorption(beam);
         }
@@ -398,71 +384,37 @@ void HandlerPO::HandleBeams(std::vector<Beam> &beams, double sinZenith)
             m_outputEnergy += BeamCrossSection(beam)*m_[0][0]*m_sinZenith;
         }
 
-#ifdef _DEBUG // DEB
-        sum += beam.Area();
-        for (int i = 0; i <= m_sphere.nAzimuth; ++i)
+        for (int i = 0; i < sphere.nAzimuth; ++i)
         {
-            for (int j = 0; j <= m_sphere.nZenith; ++j)
+            for (int j = 0; j <= sphere.nZenith; ++j)
             {
-                if (/*i == m_sphere.nAzimuth &&*/ j == m_sphere.nZenith)
-                    int ddd = 0;
-#else
-
-        for (int i = 0; i <= m_sphere.nAzimuth; ++i)
-        {
-            for (int j = 0; j <= m_sphere.nZenith; ++j)
-            {
-#endif
-                Point3d &dir = m_sphere.directions[i][j];
-                Point3d &vf = /*(j == 0) ? m_sphere.vf.back() :*/ m_sphere.vf[i][j];
+                Point3d &dir = sphere.directions[i][j];
+                Point3d &vf = sphere.vf[i][j];
                 matrixC diffractedMatrix = ApplyDiffraction(beam, info, dir, vf);
 
-//                if (groupId < 0)
-                if (!isCoh)
+//                if (!isCoh)
                 {
                     matrix m = Mueller(diffractedMatrix);
-#ifdef _DEBUG // DEB
-                    // double &ddd = m[0][0];
-#endif
                     m *= m_sinZenith;
-                    // m /= 2; // TODO: костыль
-                    M.insert(i, j, m);
-                }
-                else
-                {
-                    // matrix m = Mueller(diffractedMatrix);
-                    // m_outputEnergy += /*xs**/m[0][0];
-                    m_diffractedMatrices[groupId].insert(i, j, diffractedMatrix);
+                    Mincoh.insert(i, j, m);
 
-#ifdef _DEBUG // DEB
-                    if (i == m_sphere.nAzimuth && j == m_sphere.nZenith)
-                        int fff = 0;
-                    complex ddd = diffractedMatrix[0][0];
-//                    std::cout << beam.opticalPath << " "<< real(ddd) << " " << imag(ddd) << " " << beam.nActs << std::endl;
-                    int fff = 0;
-#endif
+//                    if (j == sphere.nZenith)
+//                    {
+//                        double mmm = Mincoh(0, 0)[0][0];
+//                        std::cout << mmm << " " << beam.lastFacetId << std::endl;
+//                    }
+                    //                }
+//                else
+//                {
+                    m_diffractedMatrices[groupId].insert(i, j, diffractedMatrix);
                 }
             }
         }
-#ifdef _DEBUG // DEB
-        complex ddd = m_diffractedMatrices[0](0,0)[0][0];
-        int fff = 0;
-#endif
     }
 
-    if (isCoh)
-    {
-        AddToMueller();
-    }
-
-#ifdef _DEBUG // DEB
-//    double mm = M(28, 20)[0][0];
-    int fff = 0;
-#endif
-
-//    if (m_tracks->shouldComputeTracksOnly)
+//    if (isCoh)
 //    {
-//        AddToMueller();
+        AddToMueller();
 //    }
 }
 
@@ -472,7 +424,7 @@ void HandlerPO::SetTracks(Tracks *tracks)
 
     for (int i = 0; i < m_tracks->size() + 1; ++i)
     {
-        Arr2D tmp = Arr2D(m_sphere.nAzimuth+1, m_sphere.nZenith+1, 4, 4);
+        Arr2D tmp = Arr2D(sphere.nAzimuth, sphere.nZenith+1, 4, 4);
         m_groupMatrices.push_back(tmp);
     }
 }

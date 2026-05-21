@@ -36,7 +36,7 @@ public:
 
     void SetIsOutputGroups(bool value);// REF: заменить
 
-    void CalcCsBeta(int betaNorm, double beta, const AngleRange &betaRange,
+    bool CalcCsBeta(int betaNorm, double beta, const AngleRange &betaRange,
                     const AngleRange &gammaRange, double normIndex, double &cs_beta);
 
     void OutputStatisticsPO(CalcTimer &timer, long long orNumber, const std::string &path);
@@ -67,7 +67,7 @@ protected:
 
 protected:
     void OutputStartTime(CalcTimer &timer);
-    void OutputProgress(int nOrientation, long long count,
+    void OutputProgress(std::string dir, int nOrientation, long long count,
                         int zenith, int azimuth, CalcTimer &timer, int nBeams);
     void OutputOrientationToLog(int i, int j, std::ostream &logfile);
 

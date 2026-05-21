@@ -60,10 +60,9 @@ void HandlerGO::ExtractPeaks(double *b, double *f, double norm,
     frw.close();
 }
 
-void HandlerGO::AverageOverAlpha(int EDF, double norm, ContributionGO &contrib,
+void HandlerGO::BackAndForw(int EDF, double norm, ContributionGO &contrib,
                                  const std::string &destDir)
 {
-    //Analytical averaging over alpha angle
     double b[3], f[3];
     b[0] =  contrib.back[0][0];
     b[1] = (contrib.back[1][1] - contrib.back[2][2])/2.0;
@@ -73,14 +72,14 @@ void HandlerGO::AverageOverAlpha(int EDF, double norm, ContributionGO &contrib,
     f[1] = (contrib.forward[1][1] + contrib.forward[2][2])/2.0;
     f[2] =  contrib.forward[3][3];
 
-    // Extracting the forward and backward peak in a separate file if needed
-    if (EDF)
+//    if (EDF)
     {
-        ExtractPeaks(b, f, norm, destDir);
+//        ExtractPeaks(b, f, norm, destDir);
     }
-    else
+//    else
     {
         contrib.muellers(0,contrib.nTheta,0,0) += f[0];
+        std::cout << std::endl << "!!! " << f[0];
         contrib.muellers(0,0,0,0) += b[0];
         contrib.muellers(0,contrib.nTheta,1,1) += f[1];
         contrib.muellers(0,0,1,1) += b[1];
@@ -153,7 +152,7 @@ void HandlerGO::WriteToFile(ContributionGO &contrib, double norm,
                 "M31 M32 M33 M34 "\
                 "M41 M42 M43 M44";
 
-    double radius = m_sphere.zenithEnd - m_sphere.zenithStart;
+    double radius = sphere.zenithEnd - sphere.zenithStart;
     float thetaStepDeg = contrib.thetaStep;
     float thetaStepRad = DegToRad(contrib.thetaStep);
 

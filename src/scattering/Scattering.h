@@ -39,7 +39,7 @@ public:
 
 protected:
     Facet *m_facets;
-    Splitting splitting;
+    Splitting splitter;
     Light *m_incidentLight;
 
     Vector3f m_incidentDir;

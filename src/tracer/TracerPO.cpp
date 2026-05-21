@@ -37,7 +37,7 @@ void TracerPO::TraceRandom(const AngleRange &betaRange, const AngleRange &gammaR
 			outBeams.clear();
 		}
 
-        m_handler->WriteMatricesToFile(m_resultDirName, 1000);
+        m_handler->WriteMatricesToFile(m_resultDirName, 1000, true);
 
         // OutputProgress(betaRange.number, count, timer);
 		++count;
@@ -58,6 +58,6 @@ void TracerPO::TraceFixed(const double &beta, const double &gamma)
 
     m_handler->HandleBeams(outBeams, 1);
 	outBeams.clear();
-    m_handler->WriteMatricesToFile(m_resultDirName, 1000);
+    m_handler->WriteMatricesToFile(m_resultDirName, 1000, true);
 	outFile.close();
 }

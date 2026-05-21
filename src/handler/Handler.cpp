@@ -15,7 +15,7 @@ Handler::Handler(Particle *particle, Light *incidentLight, int nTheta,
       m_hasAbsorption(false),
       m_normIndex(1),
       m_nBadBeams(0),
-      m_sphere(0.0, 0.0, 0, 0),
+      sphere(0.0, 0.0, 0, 0),
       nTheta(nTheta)
 {
 //	m_wavelength = 0.532;
@@ -50,7 +50,7 @@ void Handler::SetTracks(Tracks *tracks)
     m_tracks = tracks;
 }
 
-void Handler::WriteMatricesToFile(string &/*destName*/, double nrg)
+void Handler::WriteMatricesToFile(string &/*destName*/, double nrg, bool isCoh)
 {
 }
 
@@ -88,44 +88,44 @@ void Handler::SetScattering(Scattering *scattering)
     m_scattering = scattering;
 }
 
-void Handler::ExtropolateOpticalLenght(Beam &beam, const std::vector<int> &tr)
-{
-    std::vector<double> lengths;
+//void Handler::ExtropolateOpticalLenght(Beam &beam, const std::vector<int> &tr)
+//{
+//    std::vector<double> lengths;
 
-    for (int i = 0; i < beam.nVertices; ++i)
-    {
-        double d = m_scattering->ComputeInternalOpticalPath(
-                    beam, beam.arr[i], tr);
-        lengths.push_back(d);
-    }
+//    for (int i = 0; i < beam.nVertices; ++i)
+//    {
+//        double d = m_scattering->ComputeInternalOpticalPath(
+//                    beam, beam.arr[i], tr);
+//        lengths.push_back(d);
+//    }
 
-    Vector3f _n = beam.Normal();
-    Point3d n = Point3d(_n.cx, _n.cy, _n.cz);
+//    Vector3f _n = beam.Normal();
+//    Point3d n = Point3d(_n.cx, _n.cy, _n.cz);
 
-    Point3d hor;
-    Point3d ver;
-    ComputeCoordinateSystemAxes(n, hor, ver);
+//    Point3d hor;
+//    Point3d ver;
+//    ComputeCoordinateSystemAxes(n, hor, ver);
 
-    Point3f cntr = beam.Center();
-    Point3d center = ChangeCoordinateSystem(hor, ver, n,
-                                            Point3d(cntr.cx, cntr.cy, cntr.cz));
-    double ls[3];
-    ls[0] = lengths[0];
-    ls[1] = lengths[1];
-    ls[2] = lengths[2];
+//    Point3f cntr = beam.Center();
+//    Point3d center = ChangeCoordinateSystem(hor, ver, n,
+//                                            Point3d(cntr.cx, cntr.cy, cntr.cz));
+//    double ls[3];
+//    ls[0] = lengths[0];
+//    ls[1] = lengths[1];
+//    ls[2] = lengths[2];
 
-//	Point3d lens = ComputeLengthIndices(beam, info);
+////	Point3d lens = ComputeLengthIndices(beam, info);
 
-//	for (int i = 3; i < beam.nVertices; ++i)
-//	{
-//		Point3d newP = ChangeCoordinateSystem(hor, ver, n, beam.arr[i]) - center;
-//		double newL = lens.z + lens.x*newP.x + lens.y*newP.y;
-//		double err = fabs((lengths[i] - newL)/lengths[i])*100;
-//		if (err > 5)
-//			m_logFile << Polygon(beam) << "Area: " << beam.Area() << ' '
-//					  << i << ", " << "Error: " << err << std::endl;
-//	}
-}
+////	for (int i = 3; i < beam.nVertices; ++i)
+////	{
+////		Point3d newP = ChangeCoordinateSystem(hor, ver, n, beam.arr[i]) - center;
+////		double newL = lens.z + lens.x*newP.x + lens.y*newP.y;
+////		double err = fabs((lengths[i] - newL)/lengths[i])*100;
+////		if (err > 5)
+////			m_logFile << Polygon(beam) << "Area: " << beam.Area() << ' '
+////					  << i << ", " << "Error: " << err << std::endl;
+////	}
+//}
 
 void Handler::ApplyAbsorption(Beam &beam)
 {
@@ -300,6 +300,7 @@ complex Handler::DiffractInclineAbs(const BeamInfo &info, const Beam &beam,
             }
             else if (absCi > m_eps3)
             {
+                p1 = p2;
                 continue;
             }
             else
@@ -319,6 +320,7 @@ complex Handler::DiffractInclineAbs(const BeamInfo &info, const Beam &beam,
 #endif
             if (isnan(real(tmp2)))
             {
+                p1 = p2;
                 continue;
             }
 
@@ -357,6 +359,7 @@ complex Handler::DiffractInclineAbs(const BeamInfo &info, const Beam &beam,
             }
             else if (absEi > m_eps3)
             {
+                p1 = p2;
                 continue;
             }
             else
@@ -380,6 +383,7 @@ complex Handler::DiffractInclineAbs(const BeamInfo &info, const Beam &beam,
 #endif
             if (isnan(real(tmp2)))
             {
+                p1 = p2;
                 continue;
             }
 
@@ -425,10 +429,7 @@ complex Handler::DiffractIncline(const BeamInfo &info, const Beam &beam,
 
     double absA = fabs(A);
     double absB = fabs(B);
-#ifdef _DEBUG // DEB
-    if (beam.id == 423)
-        int fff = 0;
-#endif
+
     if (absA < m_eps2 && absB < m_eps2)
     {
         return m_invComplWave * info.area;

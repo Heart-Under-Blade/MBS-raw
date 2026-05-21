@@ -64,6 +64,7 @@ void SetArgRules(ArgPP &parser)
     parser.AddRule("tr", 1, true); // file with trajectories
     parser.AddRule("all", 0, true); // calculate all trajectories
     parser.AddRule("abs", zero, true, "w"); // accounting of absorbtion
+    parser.AddRule("abs2", zero, true, "w"); // accounting of absorbtion
     parser.AddRule("close", 0, true); // closing of program after calculation
     parser.AddRule("o", 1, true); // output folder name
     parser.AddRule("gr", zero, true);
@@ -352,10 +353,6 @@ int main(int argc, const char* argv[])
         trackGroups.shouldComputeTracksOnly = !args.IsCatched("all");
         trackGroups.shouldOutputGroups = args.IsCatched("gr");
     }
-    else
-    {
-
-    }
 
     int nTheta = args.GetDoubleValue("grid", 2);
 
@@ -459,6 +456,11 @@ int main(int argc, const char* argv[])
                     handler = new HandlerPOTotal(particle, &tracer->m_incidentLight,
                                                  nTheta, wave);
                     handler->normIndexGamma = gamma.step/gamma.norm;
+
+                    if (args.IsCatched("abs2"))
+                    {
+                        handler->isAbs2 = true;
+                    }
 
                     if (args.IsCatched("filter"))
                     {

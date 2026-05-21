@@ -9,7 +9,7 @@ public:
               double wavelength);
 
     void HandleBeams(std::vector<Beam> &beams, double sinZenith) override;
-    void WriteMatricesToFile(std::string &destName, double nrg) override;
+    void WriteMatricesToFile(std::string &destName, double nrg, bool isCoh) override;
     void WriteTotalMatricesToFile(const std::string &destName) override;
     // double ComputeTotalScatteringEnergy() override;
 
@@ -19,12 +19,15 @@ public:
 
     matrix *m_Lp;
     matrix *m_Ln;
-    Arr2D M;				// Mueller matrices
+
+    // Mueller matrices
+    Arr2D Mcoh;
+    Arr2D Mincoh;
 
 protected:
     virtual void AddToMueller();
 
-    void ComputeOpticalLengths(const Beam &beam, BeamInfo &info);
+    void ComputeOpticalLengths(Beam &beam, BeamInfo &info);
 
     virtual void RotateJones(const Beam &beam, const BeamInfo &info,
                      const Vector3d &vf, const Vector3d &direction,

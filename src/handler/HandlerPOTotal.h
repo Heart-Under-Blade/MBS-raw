@@ -8,7 +8,7 @@ public:
     HandlerPOTotal(Particle *particle, Light *incidentLight, int nTheta,
                    double wavelength);
     ~HandlerPOTotal() { delete betaMueller; }
-    void WriteMatricesToFile(std::string &destName, double nrg) override;
+    void WriteMatricesToFile(std::string &destName, double nrg, bool isCoh) override;
     void AddToMueller() override;
 
     void OutputContribution(double angle, double energy);

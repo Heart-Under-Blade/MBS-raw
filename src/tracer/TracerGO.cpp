@@ -35,7 +35,7 @@ void TracerGO::TraceRandom(const AngleRange &betaRange, const AngleRange &gammaR
         beta = beta = betaRange.min + i*betaRange.step;
         CalcCsBeta(betaNorm, beta, betaRange, gammaRange, normIndex, cs_beta);
 
-        for (int j = 0; j <= gammaRange.number; ++j)
+        for (int j = 0; j < gammaRange.number; ++j)
 		{
 			gamma = (j + 0.5)*gammaRange.step;
 
@@ -51,14 +51,14 @@ void TracerGO::TraceRandom(const AngleRange &betaRange, const AngleRange &gammaR
 //			OutputOrientationToLog(i, j, logfile);
             if (m_logTime == 0)
             {
-                OutputProgress(orNum, ++count,
+                OutputProgress(m_resultDirName, orNum, ++count,
                                std::lround(RadToDeg(beta)),
                                std::lround(RadToDeg(gamma)), timer,
                                outBeams.size());
             }
             else
             {
-                OutputProgress(orNum, ++count, i,j, timer, outBeams.size());
+                OutputProgress(m_resultDirName, orNum, ++count, i,j, timer, outBeams.size());
             }
 
             outBeams.clear();
@@ -68,7 +68,7 @@ void TracerGO::TraceRandom(const AngleRange &betaRange, const AngleRange &gammaR
 
     // m_incomingEnergy *= normIndex;
     m_handler->m_outputEnergy = ((HandlerGO*)m_handler)->ComputeTotalScatteringEnergy();
-    m_handler->WriteMatricesToFile(m_resultDirName, 1000);
+    m_handler->WriteMatricesToFile(m_resultDirName, 1000, true);
     OutputSummary(orNum, timer);
 }
 
@@ -84,7 +84,7 @@ void TracerGO::TraceFixed(const double &beta, const double &gamma)
 
 //	double D_tot = CalcTotalScatteringEnergy();
 
-    m_handler->WriteMatricesToFile(m_resultDirName, 1000);
+    m_handler->WriteMatricesToFile(m_resultDirName, 1000, true);
     //	WriteStatisticsToFileGO(1, D_tot, 1, timer); // TODO: раскомментить
 }
 
@@ -130,7 +130,7 @@ void TracerGO::TraceMonteCarlo(const AngleRange &betaRange, const AngleRange &ga
 
         outBeams.clear();
 
-        OutputProgress(nOrientations, ++count, i, i, timer, outBeams.size());
+        OutputProgress(dir, nOrientations, ++count, i, i, timer, outBeams.size());
     }
 
     double norm = CalcNorm(nOrientations);
@@ -140,7 +140,7 @@ void TracerGO::TraceMonteCarlo(const AngleRange &betaRange, const AngleRange &ga
 
     m_resultDirName = dir + m_resultDirName + '\\' + m_resultDirName;
 
-    m_handler->WriteMatricesToFile(m_resultDirName, m_incomingEnergy);
+    m_handler->WriteMatricesToFile(m_resultDirName, m_incomingEnergy, true);
     OutputSummary(nOrientations, timer);
 
 }
