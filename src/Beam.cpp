@@ -75,16 +75,17 @@ Beam::Beam(Beam &&other)
 
 Vector3f Beam::RotateSpherical(const Vector3f &dir, const Vector3f &polarBasis)
 {
-	Vector3f newBasis;
-	double cs = DotProduct(dir, direction);
+    Vector3f newBasis;
 
-	if (fabs(1.0 - cs) <= DBL_EPSILON)
+    double cs = DotProduct(dir, direction);
+
+    if (fabs(1.0 - cs) < FLT_EPSILON)
 	{
 		newBasis = -polarBasis;
-	}
+    }
 	else
 	{
-		if (fabs(1.0 + cs) <= DBL_EPSILON)
+        if (fabs(1.0 + cs) < DBL_EPSILON)
 		{
 			newBasis = polarBasis;
 		}

@@ -26,6 +26,8 @@ Droxtal::Droxtal(const complex &refrIndex,
 	CreateSideFacets(topMidBase, botMidBase, iFacet);
 	CreateSideFacets(botMidBase, defaultFacets[19], iFacet);
 
+    SetSymmetry(M_PI/2, M_PI/3);
+
 	SetDefaultNormals();
 	Reset();
 	SetDefaultCenters();

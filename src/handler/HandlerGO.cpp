@@ -61,7 +61,7 @@ void HandlerGO::ExtractPeaks(double *b, double *f, double norm,
 }
 
 void HandlerGO::BackAndForw(int EDF, double norm, ContributionGO &contrib,
-                                 const std::string &destDir)
+                            const std::string &destDir)
 {
     double b[3], f[3];
     b[0] =  contrib.back[0][0];
@@ -79,7 +79,7 @@ void HandlerGO::BackAndForw(int EDF, double norm, ContributionGO &contrib,
 //    else
     {
         contrib.muellers(0,contrib.nTheta,0,0) += f[0];
-        std::cout << std::endl << "!!! " << f[0];
+//        std::cout << std::endl << "!!! " << f[0];
         contrib.muellers(0,0,0,0) += b[0];
         contrib.muellers(0,contrib.nTheta,1,1) += f[1];
         contrib.muellers(0,0,1,1) += b[1];

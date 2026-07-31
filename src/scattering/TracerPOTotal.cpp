@@ -26,7 +26,9 @@ void TracerPOTotal::TraceRandom(const AngleRange &betaRange,
     vector<Beam> outBeams;
     double beta, gamma;
 
-    int betaNorm = (m_symmetry.beta < M_PI_2+FLT_EPSILON && m_symmetry.beta > M_PI_2-FLT_EPSILON) ? 1 : 2;
+    int betaNorm = (m_symmetry.beta < M_PI_2+FLT_EPSILON &&
+                    m_symmetry.beta > M_PI_2-FLT_EPSILON) ? 1 : 2;
+
     double normIndex = gammaRange.number * betaNorm;
     m_handler->SetNormIndex(normIndex);
 

@@ -106,7 +106,7 @@ void TracerGO::TraceMonteCarlo(const AngleRange &betaRange, const AngleRange &ga
     long long nTacts;
     asm("rdtsc" : "=A"(nTacts));
     srand(nTacts);
-    cout << endl << "NTacts = " << nTacts << endl;
+//    cout << endl << "NTacts = " << nTacts << endl;
 //    srand(static_cast<unsigned>(time(0)));
     long long count = 0;
 
