@@ -432,25 +432,16 @@ complex Handler::DiffractIncline(const BeamInfo &info, const Beam &beam,
 
     if (absA < m_eps2 && absB < m_eps2)
     {
-        return m_invComplWave * info.area;
+        return -m_invComplWave * info.area;
     }
 
     complex s(0, 0);
 
     int begin, startIndex, endIndex;
 
-    if (info.order)
-    {
-        begin = 0;
-        startIndex = beam.nVertices-1;
-        endIndex = -1;
-    }
-    else
-    {
-        begin = beam.nVertices-1;
-        startIndex = 0;
-        endIndex = beam.nVertices;
-    }
+    begin = beam.nVertices-1;
+    startIndex = 0;
+    endIndex = beam.nVertices;
 
     Point3d p1 = ChangeCoordinateSystem(info.horAxis, info.verAxis,
                                         info.normald, beam.arr[begin]) - info.projectedCenter;
@@ -458,7 +449,7 @@ complex Handler::DiffractIncline(const BeamInfo &info, const Beam &beam,
 
     if (absB > absA)
     {
-        for (int i = startIndex; i != endIndex; i = info.order ? i-1 : i+1)
+        for (int i = startIndex; i != endIndex; ++i)
         {
             p2 = ChangeCoordinateSystem(info.horAxis, info.verAxis,
                                         info.normald, beam.arr[i]) - info.projectedCenter;
@@ -495,7 +486,7 @@ complex Handler::DiffractIncline(const BeamInfo &info, const Beam &beam,
     }
     else
     {
-        for (int i = startIndex; i != endIndex; i = info.order ? i-1 : i+1)
+        for (int i = startIndex; i != endIndex; ++i)
         {
             p2 = ChangeCoordinateSystem(info.horAxis, info.verAxis,
                                         info.normald, beam.arr[i]) - info.projectedCenter;
