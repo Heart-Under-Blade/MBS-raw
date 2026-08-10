@@ -67,8 +67,8 @@ void Bullet::SetFacetParams()
 {
 	for (int i = 0; i < nFacets; ++i)
 	{
-		facets[i].isVisibleIn = false;
-		facets[i].isVisibleOut = false;
+		defaultFacets[i].isVisibleIn = false;
+		defaultFacets[i].isVisibleOut = false;
 	}
 
 	defaultFacets[0].nVertices = 3;
