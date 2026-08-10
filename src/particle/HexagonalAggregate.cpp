@@ -112,17 +112,17 @@ void HexagonalAggregate::SetFacetParams()
 	defaultFacets[8].nVertices = BASE_VERTEX_NUM;
 	defaultFacets[15].nVertices = BASE_VERTEX_NUM;
 
-	facets[1].isVisibleOut = false;
-	facets[2].isVisibleOut = false;
-	facets[3].isVisibleOut = false;
-	facets[7].isVisibleOut = false;
-	facets[10].isVisibleOut = false;
-	facets[11].isVisibleOut = false;
-	facets[12].isVisibleOut = false;
-	facets[15].isVisibleOut = false;
+	defaultFacets[1].isVisibleOut = false;
+	defaultFacets[2].isVisibleOut = false;
+	defaultFacets[3].isVisibleOut = false;
+	defaultFacets[7].isVisibleOut = false;
+	defaultFacets[10].isVisibleOut = false;
+	defaultFacets[11].isVisibleOut = false;
+	defaultFacets[12].isVisibleOut = false;
+	defaultFacets[15].isVisibleOut = false;
 
 	for (int i = 0; i < nFacets; ++i) // OPT: кол-во затеняемых гарней на самом деле меньше
 	{
-		facets[i].isVisibleIn = false;
+		defaultFacets[i].isVisibleIn = false;
 	}
 }
