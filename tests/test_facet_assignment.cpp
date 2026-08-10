@@ -4,10 +4,11 @@
 #include "particle/HexagonalAggregate.h"
 
 #include <cassert>
+#include <cstdio>
 
 namespace
 {
-void CheckConcaveHexagonal(const ConcaveHexagonal &particle)
+void CheckConcaveHexagonal(const Particle &particle)
 {
     assert(particle.nFacets == 18);
     for (int i = 0; i < particle.nFacets; ++i)
@@ -73,6 +74,18 @@ int main()
     CheckConcaveHexagonal(concave);
     concave.Resize(1.2);
     CheckConcaveHexagonal(concave);
+
+    const char *filePath = "/tmp/mbs_raw_concave_visibility_roundtrip.dat";
+    concave.Output(filePath);
+    Particle loadedWithSidecar;
+    loadedWithSidecar.SetFromFile(filePath);
+    CheckConcaveHexagonal(loadedWithSidecar);
+
+    std::remove("/tmp/mbs_raw_concave_visibility_roundtrip.dat.visibility");
+    Particle loadedLegacy;
+    loadedLegacy.SetFromFile(filePath);
+    CheckConcaveHexagonal(loadedLegacy);
+    std::remove(filePath);
 
     Bullet bullet(refractiveIndex, 10.0, 20.0, 5.0);
     CheckBullet(bullet);

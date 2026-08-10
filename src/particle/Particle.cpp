@@ -2,6 +2,9 @@
 #include <fstream>
 #include <iostream>
 #include <cstring>
+#include <iomanip>
+#include <limits>
+#include <vector>
 #include "global.h"
 
 using namespace std;
@@ -59,6 +62,25 @@ void Particle::SetFromFile(const std::string &filename)
 
     pfile.getline(buff, bufSize); // skip empty line
 
+    std::vector<std::pair<bool, bool>> storedVisibility;
+    std::ifstream visibilityFile(filename + ".visibility");
+    if (visibilityFile.is_open())
+    {
+        int count = 0;
+        visibilityFile >> count;
+        storedVisibility.reserve(count);
+        for (int i = 0; i < count; ++i)
+        {
+            int visibleIn = 1;
+            int visibleOut = 1;
+            if (!(visibilityFile >> visibleIn >> visibleOut))
+            {
+                throw std::runtime_error("Invalid facet visibility metadata in " + filename);
+            }
+            storedVisibility.push_back(std::make_pair(visibleIn != 0, visibleOut != 0));
+        }
+    }
+
     while (!pfile.eof()) // read vertices of facets
     {
         pfile.getline(buff, bufSize);
@@ -98,7 +120,47 @@ void Particle::SetFromFile(const std::string &filename)
     Reset();
     SetDefaultCenters();
 
-    if (isConcave || isAggregated)
+    if (!storedVisibility.empty())
+    {
+        if (storedVisibility.size() != static_cast<size_t>(nFacets))
+        {
+            throw std::runtime_error("Facet visibility count does not match geometry in " + filename);
+        }
+        for (int i = 0; i < nFacets; ++i)
+        {
+            defaultFacets[i].isVisibleIn = storedVisibility[i].first;
+            defaultFacets[i].isVisibleOut = storedVisibility[i].second;
+            facets[i] = defaultFacets[i];
+        }
+    }
+    else if (isConcave && !isAggregated)
+    {
+        int triangleCount = 0;
+        int quadCount = 0;
+        for (int i = 0; i < nFacets; ++i)
+        {
+            triangleCount += defaultFacets[i].nVertices == 3;
+            quadCount += defaultFacets[i].nVertices == 4;
+        }
+        const bool isLegacyConcaveHex = nFacets == 18
+                && triangleCount == 12 && quadCount == 6;
+        for (int i = 0; i < nFacets; ++i)
+        {
+            if (isLegacyConcaveHex)
+            {
+                const bool cavityFacet = defaultFacets[i].nVertices == 3;
+                defaultFacets[i].isVisibleIn = cavityFacet;
+                defaultFacets[i].isVisibleOut = !cavityFacet;
+            }
+            else
+            {
+                defaultFacets[i].isVisibleIn = false;
+                defaultFacets[i].isVisibleOut = false;
+            }
+            facets[i] = defaultFacets[i];
+        }
+    }
+    else if (isAggregated)
     {
         for (int i = 0; i < nFacets; ++i)
         {
@@ -536,6 +598,7 @@ bool Particle::IsConcave() const
 void Particle::Output(std::string name)
 {
     std::ofstream file(name, std::ios::out);
+    file << std::setprecision(std::numeric_limits<double>::max_digits10);
 
     file << (int)isConcave << std::endl;
     file << (int)isAggregated;
@@ -570,6 +633,14 @@ void Particle::Output(std::string name)
     }
 
     file.close();
+
+    std::ofstream visibilityFile(name + ".visibility", std::ios::out);
+    visibilityFile << nFacets << std::endl;
+    for (int i = 0; i < nFacets; ++i)
+    {
+        visibilityFile << static_cast<int>(facets[i].isVisibleIn) << ' '
+                       << static_cast<int>(facets[i].isVisibleOut) << std::endl;
+    }
 }
 
 void Particle::SetRefractiveIndex(const complex &value)
