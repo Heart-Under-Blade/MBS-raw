@@ -26,8 +26,9 @@ Facet &Facet::operator =(const Facet &other)
 		in_normal = other.in_normal;
 		ex_normal = other.ex_normal;
 		center = other.center;
+		isVisibleIn = other.isVisibleIn;
+		isVisibleOut = other.isVisibleOut;
 	}
 
 	return *this;
 }
-
