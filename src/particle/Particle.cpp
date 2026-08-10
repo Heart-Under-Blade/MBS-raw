@@ -590,6 +590,8 @@ void Particle::Reset()
     for (int i = 0; i < nFacets; ++i)
     {
         facets[i] = defaultFacets[i];
+        facets[i].isVisibleIn = defaultFacets[i].isVisibleIn;
+        facets[i].isVisibleOut = defaultFacets[i].isVisibleOut;
     }
 }
 
