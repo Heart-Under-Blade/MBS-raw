@@ -197,6 +197,9 @@ matrixC HandlerPO::ApplyDiffraction(const Beam &beam, const BeamInfo &info,
                 ComputeFnJones(beam.J, info, direction) :
                 beam.J * exp_im(m_waveIndex*beam.opticalPath);
 
+    if (beam.lastFacetId == __INT_MAX__ || (beam.nActs & 1))
+        fnJones *= -1.0;
+
     matrixC jones_rot(2, 2);
     RotateJones(beam, info, vf, direction, jones_rot);
 
@@ -266,12 +269,6 @@ BeamInfo HandlerPO::ComputeBeamInfo(Beam &beam)
     info.normald = Point3d(info.normal.cx, info.normal.cy, info.normal.cz);
 
     info.order = DotProduct(info.normal, beam.direction) > 0;
-
-    if (!info.order)
-    {
-        info.normal = -info.normal;
-        info.normald = -info.normald;
-    }
 
     m_isBadBeam = false;
 
