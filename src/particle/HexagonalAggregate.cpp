@@ -5,6 +5,8 @@ HexagonalAggregate::HexagonalAggregate(const complex &refrIndex, double diameter
 									   int particleNumber)
 {
 	isConcave = true;
+	isAggregated = true;
+	nFacetsInPart = 8;
 	SetSize(diameter, height);
 	Init(8*particleNumber, refrIndex);
 

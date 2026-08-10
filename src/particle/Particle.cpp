@@ -1,4 +1,5 @@
 #include "Particle.h"
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <cstring>
@@ -25,7 +26,7 @@ void Particle::SetFromFile(const std::string &filename)
     }
 
     const int bufSize = 1024;
-    char *buff = (char*)malloc(sizeof(char) * bufSize);
+    char buff[bufSize];
 
     nFacets = 0;
     Facet *facet = &(defaultFacets[nFacets++]);
@@ -120,6 +121,22 @@ void Particle::SetFromFile(const std::string &filename)
     Reset();
     SetDefaultCenters();
 
+    int triangleCount = 0;
+    int quadCount = 0;
+    int hexagonCount = 0;
+    for (int i = 0; i < nFacets; ++i)
+    {
+        triangleCount += defaultFacets[i].nVertices == 3;
+        quadCount += defaultFacets[i].nVertices == 4;
+        hexagonCount += defaultFacets[i].nVertices == 6;
+    }
+    const bool isLegacyConcaveHex = nFacets == 18
+            && triangleCount == 12 && quadCount == 6;
+    const bool isLegacyBullet = nFacets == 13
+            && triangleCount == 6 && quadCount == 6 && hexagonCount == 1;
+    const bool isLegacyTwoHexAggregate = nFacets == 16
+            && quadCount == 12 && hexagonCount == 4;
+
     if (!storedVisibility.empty())
     {
         if (storedVisibility.size() != static_cast<size_t>(nFacets))
@@ -133,34 +150,33 @@ void Particle::SetFromFile(const std::string &filename)
             facets[i] = defaultFacets[i];
         }
     }
-    else if (isConcave && !isAggregated)
+    else if (isLegacyConcaveHex)
     {
-        int triangleCount = 0;
-        int quadCount = 0;
         for (int i = 0; i < nFacets; ++i)
         {
-            triangleCount += defaultFacets[i].nVertices == 3;
-            quadCount += defaultFacets[i].nVertices == 4;
-        }
-        const bool isLegacyConcaveHex = nFacets == 18
-                && triangleCount == 12 && quadCount == 6;
-        for (int i = 0; i < nFacets; ++i)
-        {
-            if (isLegacyConcaveHex)
-            {
-                const bool cavityFacet = defaultFacets[i].nVertices == 3;
-                defaultFacets[i].isVisibleIn = cavityFacet;
-                defaultFacets[i].isVisibleOut = !cavityFacet;
-            }
-            else
-            {
-                defaultFacets[i].isVisibleIn = false;
-                defaultFacets[i].isVisibleOut = false;
-            }
+            const bool cavityFacet = defaultFacets[i].nVertices == 3;
+            defaultFacets[i].isVisibleIn = cavityFacet;
+            defaultFacets[i].isVisibleOut = !cavityFacet;
             facets[i] = defaultFacets[i];
         }
     }
-    else if (isAggregated)
+    else if (isLegacyTwoHexAggregate)
+    {
+        const int hiddenOutside[] = {1, 2, 3, 7, 10, 11, 12, 15};
+        bool visibleOutside[16];
+        std::fill(visibleOutside, visibleOutside + 16, true);
+        for (unsigned i = 0; i < sizeof(hiddenOutside)/sizeof(hiddenOutside[0]); ++i)
+        {
+            visibleOutside[hiddenOutside[i]] = false;
+        }
+        for (int i = 0; i < nFacets; ++i)
+        {
+            defaultFacets[i].isVisibleIn = false;
+            defaultFacets[i].isVisibleOut = visibleOutside[i];
+            facets[i] = defaultFacets[i];
+        }
+    }
+    else if (isLegacyBullet || isConcave || isAggregated)
     {
         for (int i = 0; i < nFacets; ++i)
         {
@@ -424,8 +440,16 @@ void Particle::Concate(const std::vector<Particle> &parts)
     int i = 0;
     nFacets = 0;
 
+    if (!parts.empty())
+    {
+        nFacetsInPart = parts.front().nFacets;
+    }
     for (const Particle &part : parts)
     {
+        if (part.nFacets != nFacetsInPart)
+        {
+            throw std::runtime_error("Aggregate parts must have equal facet counts");
+        }
         nFacets += part.nFacets;
 
         for (int j = 0; j < part.nFacets; ++j)
@@ -593,6 +617,20 @@ void Particle::Move(float dx, float dy, float dz)
 bool Particle::IsConcave() const
 {
     return isConcave;
+}
+
+void Particle::GetParticalFacetIdRangeByFacetId(int id, int &begin, int &end) const
+{
+    if (isAggregated && nFacetsInPart > 0)
+    {
+        begin = (id/nFacetsInPart)*nFacetsInPart;
+        end = std::min(begin + nFacetsInPart, nFacets);
+    }
+    else
+    {
+        begin = 0;
+        end = nFacets;
+    }
 }
 
 void Particle::Output(std::string name)

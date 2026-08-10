@@ -32,7 +32,7 @@ public:
     void Rotate(double beta, double gamma, double alpha);
     void Move(float dx, float dy, float dz);
     void Fix();
-    void Resize(double size);
+    virtual void Resize(double size);
 
     Facet CreateBase(int nVertices, double radius, double zCoordinate);
     void CreateSideFacets(const Facet &top, const Facet &bottom, int &iFacet);
@@ -62,8 +62,7 @@ public:
     void SetRefractiveIndex(const complex &value);
 
     const Symmetry &GetSymmetry() const;
-    virtual void GetParticalFacetIdRangeByFacetId(
-            int /*id*/, int &/*begin*/, int &/*end*/) const {}
+    virtual void GetParticalFacetIdRangeByFacetId(int id, int &begin, int &end) const;
 
     bool IsConcave() const;
 
@@ -113,4 +112,3 @@ private:
     void ReadSymmetry(const int bufSize, char *trash, char *buff,
                       std::ifstream pfile, char *ptr);
 };
-
